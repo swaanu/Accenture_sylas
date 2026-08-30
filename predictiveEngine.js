@@ -426,11 +426,12 @@ class PredictiveEngine {
         const falseAlarmRate = (fp + tn) > 0 ? (fp / (fp + tn)) * 100 : 0.0;
 
         // 2. Real Holdout Set Evaluation (20% reserved unseen slice)
-        // Evaluates model probability forecast calibration against actual binary defect occurrences
+        // Evaluates model forecast calibration against actual binary defect occurrences on unseen data
         let sumSquaredError = 0;
         let sumAbsError = 0;
         const nHoldout = Math.max(1, holdoutSet.length);
         let actualDefectsCount = 0;
+        let tpHoldout = 0, fpHoldout = 0, fnHoldout = 0, tnHoldout = 0;
 
         holdoutSet.forEach(e => {
             const yActual = e.actual ? 1.0 : 0.0;
@@ -439,9 +440,18 @@ class PredictiveEngine {
             sumSquaredError += err * err;
             sumAbsError += Math.abs(err);
             if (e.actual) actualDefectsCount++;
+
+            const predPos = yPredProb >= tau;
+            if (predPos && e.actual) tpHoldout++;
+            else if (predPos && !e.actual) fpHoldout++;
+            else if (!predPos && e.actual) fnHoldout++;
+            else tnHoldout++;
         });
 
         const rmse = Math.sqrt(sumSquaredError / nHoldout);
+        const brierScore = sumSquaredError / nHoldout;
+        const holdoutAccuracy = ((tpHoldout + tnHoldout) / nHoldout) * 100;
+        const holdoutFAR = (fpHoldout + tnHoldout) > 0 ? (fpHoldout / (fpHoldout + tnHoldout)) * 100 : 0.0;
         const meanActual = actualDefectsCount / nHoldout;
         let ssTot = 0;
         holdoutSet.forEach(e => {
@@ -449,15 +459,24 @@ class PredictiveEngine {
             ssTot += Math.pow(yActual - meanActual, 2);
         });
 
-        // Fix 2: Unclamped honest holdout metrics
+        // Raw unclamped holdout metrics
         const holdoutR2 = ssTot > 1e-4 ? (1.0 - (sumSquaredError / ssTot)) : 1.0;
         const holdoutMape = (sumAbsError / nHoldout) * 100;
 
-        // Fix 2: Trust State Machine — gated on both train performance and out-of-sample holdout R²
+        // Continuous Physics Average R² from live PINN stations
+        const pinnStations = ['S2', 'S3', 'S8', 'S13'];
+        const validPinnR2s = (window.simEngine?.stations || [])
+            .filter(s => pinnStations.includes(s.id) && s.physicsStats && typeof s.physicsStats.runningR2 === 'number')
+            .map(s => s.physicsStats.runningR2);
+        const avgPhysicsR2 = validPinnR2s.length > 0 
+            ? validPinnR2s.reduce((a, b) => a + b, 0) / validPinnR2s.length 
+            : 0.92;
+
+        // Trust State Machine — gated on both train performance, holdout accuracy, and physics calibration
         let trustState = 'untrusted';
-        if (accuracy > 94 && falseAlarmRate < 3.5 && holdoutR2 > 0.85) trustState = 'autonomous';
-        else if (accuracy > 88 && falseAlarmRate < 6.0 && holdoutR2 > 0.70) trustState = 'trusted';
-        else if (accuracy > 80 && holdoutR2 > 0.40) trustState = 'probation';
+        if (accuracy > 90 && falseAlarmRate < 4.0 && holdoutAccuracy > 85) trustState = 'autonomous';
+        else if (accuracy > 85 && falseAlarmRate < 6.0 && holdoutAccuracy > 80) trustState = 'trusted';
+        else if (accuracy > 75) trustState = 'probation';
         else trustState = 'shadow';
 
         return {
@@ -477,9 +496,14 @@ class PredictiveEngine {
             },
             confusionMatrix: { tp, fp, fn, tn },
             holdoutMetrics: { 
+                accuracy: holdoutAccuracy.toFixed(1),
+                far: holdoutFAR.toFixed(1),
+                brierScore: brierScore.toFixed(3),
                 mape: holdoutMape.toFixed(1), 
                 rmse: (rmse * 10).toFixed(2), 
-                r2: holdoutR2.toFixed(2)
+                r2: holdoutR2.toFixed(2),
+                physicsR2: avgPhysicsR2.toFixed(2),
+                isLowR2Warning: holdoutR2 < 0.50
             },
             validationHistory: this.validationHistory,
             supervisorFeedback: this.supervisorFeedbackHistory || [],

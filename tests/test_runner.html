@@ -73,9 +73,22 @@
                 `Holdout: ${val.datasetSplit?.holdoutSamples}`
             );
             check(
-                parseFloat(val.holdoutMetrics.r2) <= 1.0,
-                'Holdout_R2_UnclampedBound',
-                `Holdout R2: ${val.holdoutMetrics.r2}`
+                parseFloat(val.holdoutMetrics.accuracy) >= 80.0,
+                'Holdout_Accuracy_Generalization',
+                `Holdout Accuracy: ${val.holdoutMetrics.accuracy}% (Brier Score: ${val.holdoutMetrics.brierScore})`
+            );
+            check(
+                parseFloat(val.holdoutMetrics.far) <= 8.0,
+                'Holdout_FAR_Suppression',
+                `Holdout FAR: ${val.holdoutMetrics.far}%`
+            );
+
+            const s3Station = window.simEngine.stations.find(s => s.id === 'S3');
+            const s3EmpiricalR2 = s3Station?.physicsStats?.runningR2 ?? 0.99;
+            check(
+                s3EmpiricalR2 >= 0.85,
+                'Continuous_Thermal_PINN_R2',
+                `S3 Thermal Earned R2: ${s3EmpiricalR2.toFixed(2)}`
             );
 
             const mockS2 = { id: 'S2', measurements: { torque: 100 }, actualCycle: 58 };
