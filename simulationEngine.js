@@ -530,20 +530,36 @@ class SimulationEngine {
         //  PHASE 5 — Ripple Effect from True Bottleneck
         //  Upstream → blocking propagation | Downstream → starvation
         // ================================================================
+        this.stations.forEach(s => {
+            s.isBlocked = false;
+            s.isStarved = false;
+            if (s._state === 'blocked' || s._state === 'starved') {
+                s._state = s.wipCount > 0 ? 'working' : 'idle';
+            }
+        });
+
         const btnkStation = this.stations.find(s => s.isBottleneck);
         if (btnkStation) {
-            const bIdx = btnkStation.index;
+            const bIdx = typeof btnkStation.index === 'number' ? btnkStation.index : this.stations.indexOf(btnkStation);
+            
+            // Upstream blocking ripple: stations preceding bottleneck experience backpressure
             for (let i = bIdx - 1; i >= 0; i--) {
-                if (this.stations[i].wipCount >= this.stations[i].maxBuffer - 1) {
-                    this.stations[i].isBlocked = true;
-                    this.stations[i]._state = 'blocked';
-                } else break;
+                const upstream = this.stations[i];
+                if (upstream.wipCount >= 1 || (bIdx - i <= 3)) {
+                    upstream.isBlocked = true;
+                    upstream._state = 'blocked';
+                }
+                if (bIdx - i > 4 && upstream.wipCount === 0) break;
             }
+
+            // Downstream starvation ripple: stations succeeding bottleneck are starved of parts
             for (let i = bIdx + 1; i < this.stations.length; i++) {
-                if (this.stations[i].wipCount === 0 && this.stations[i - 1].wipCount === 0) {
-                    this.stations[i].isStarved = true;
-                    this.stations[i]._state = 'starved';
-                } else break;
+                const downstream = this.stations[i];
+                if (downstream.wipCount === 0 || (i - bIdx <= 4 && downstream.wipCount <= 1)) {
+                    downstream.isStarved = true;
+                    downstream._state = 'starved';
+                }
+                if (i - bIdx > 6 && downstream.wipCount > 1) break;
             }
         }
 

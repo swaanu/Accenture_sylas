@@ -4620,15 +4620,37 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let j = i + 1; j < depNodes.length; j++) {
           const b = depNodes[j];
           const isNeighbor = Math.abs(i - j) <= 2;
-          const isCausal = (a.station.isBottleneck && (b.station.isBlocked || b.station.isStarved)) || (b.station.isBottleneck && (a.station.isBlocked || a.station.isStarved));
+          
+          const aIsBtnk = a.station.isBottleneck;
+          const bIsBtnk = b.station.isBottleneck;
+          const isCausalBlocked = (aIsBtnk && b.station.isBlocked) || (bIsBtnk && a.station.isBlocked);
+          const isCausalStarved = (aIsBtnk && b.station.isStarved) || (bIsBtnk && a.station.isStarved);
+          const isCausalGeneral = (aIsBtnk && (b.station.isBlocked || b.station.isStarved)) || (bIsBtnk && (a.station.isBlocked || a.station.isStarved));
 
-          if (isNeighbor || isCausal) {
-            const alpha = isCausal ? 0.7 : 0.15;
-            ctx.strokeStyle = isCausal ? `rgba(239, 68, 68, ${alpha})` : `rgba(255, 255, 255, ${alpha})`;
-            ctx.lineWidth = isCausal ? 2 : 0.8;
-            if (isCausal) {
-              ctx.setLineDash([4, 4]);
-              ctx.lineDashOffset = -time * 40;
+          if (isNeighbor || isCausalGeneral) {
+            let strokeColor = 'rgba(255, 255, 255, 0.15)';
+            let lineWidth = 0.8;
+            let isDashed = false;
+
+            if (isCausalBlocked) {
+              strokeColor = 'rgba(245, 158, 11, 0.85)';
+              lineWidth = 2.2;
+              isDashed = true;
+            } else if (isCausalStarved) {
+              strokeColor = 'rgba(139, 92, 246, 0.85)';
+              lineWidth = 2.2;
+              isDashed = true;
+            } else if (isCausalGeneral) {
+              strokeColor = 'rgba(239, 68, 68, 0.8)';
+              lineWidth = 2.0;
+              isDashed = true;
+            }
+
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = lineWidth;
+            if (isDashed) {
+              ctx.setLineDash([5, 4]);
+              ctx.lineDashOffset = -time * 35;
             }
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
@@ -4643,13 +4665,27 @@ document.addEventListener('DOMContentLoaded', () => {
       depNodes.forEach(n => {
         const st = n.station;
         const isSelected = st.id === selectedStationId;
-        const color = st.isBottleneck ? '#EF4444' : st.isPredictedBottleneck ? '#FFAB40' : st.zone === 'Body' ? '#00E5FF' : st.zone === 'Paint' ? '#29B6F6' : '#10B981';
-        const r = st.isBottleneck ? 12 : st.isPredictedBottleneck ? 10 : isSelected ? 9 : 7;
+        
+        let color = '#00E5FF';
+        if (st.isBottleneck) color = '#EF4444';
+        else if (st.isPredictedBottleneck) color = '#FFAB40';
+        else if (st.isBlocked) color = '#F59E0B';
+        else if (st.isStarved) color = '#8B5CF6';
+        else if (st.zone === 'Paint') color = '#29B6F6';
+        else if (st.zone === 'Assembly') color = '#10B981';
+
+        const r = st.isBottleneck ? 13 : st.isPredictedBottleneck ? 11 : (st.isBlocked || st.isStarved) ? 10 : isSelected ? 9 : 7.5;
 
         if (st.isBottleneck) {
           const pulse = 0.5 + 0.5 * Math.sin(time * 4);
-          ctx.shadowColor = color;
-          ctx.shadowBlur = 15 + pulse * 10;
+          ctx.shadowColor = '#EF4444';
+          ctx.shadowBlur = 16 + pulse * 12;
+        } else if (st.isBlocked) {
+          ctx.shadowColor = '#F59E0B';
+          ctx.shadowBlur = 8;
+        } else if (st.isStarved) {
+          ctx.shadowColor = '#8B5CF6';
+          ctx.shadowBlur = 8;
         }
 
         // Selection ring
@@ -4665,7 +4701,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ctx.setLineDash([]);
         }
 
-        ctx.fillStyle = color + '30';
+        ctx.fillStyle = color + '35';
         ctx.beginPath();
         ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
         ctx.fill();
@@ -4709,25 +4745,39 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let j = i + 1; j < stations.length; j++) {
           const st2 = stations[j];
           const x2 = pad + j * step;
-          const isRelated = Math.abs(i - j) <= 2 || (st.isBottleneck && (st2.isBlocked || st2.isStarved));
+          const isRelated = Math.abs(i - j) <= 2 || (st.isBottleneck && (st2.isBlocked || st2.isStarved)) || (st2.isBottleneck && (st.isBlocked || st.isStarved));
           if (!isRelated) continue;
 
-          const arcH = Math.abs(i - j) * 15 + 20;
-          const isCausal = st.isBottleneck && (st2.isBlocked || st2.isStarved);
-          ctx.strokeStyle = isCausal ? 'rgba(239, 68, 68, 0.6)' : 'rgba(0, 229, 255, 0.15)';
-          ctx.lineWidth = isCausal ? 2 : 1;
+          const isCausalBlocked = (st.isBottleneck && st2.isBlocked) || (st2.isBottleneck && st.isBlocked);
+          const isCausalStarved = (st.isBottleneck && st2.isStarved) || (st2.isBottleneck && st.isStarved);
+          const isCausal = isCausalBlocked || isCausalStarved || (st.isBottleneck && (st2.isBlocked || st2.isStarved));
+
+          let arcColor = 'rgba(0, 229, 255, 0.15)';
+          if (isCausalBlocked) arcColor = 'rgba(245, 158, 11, 0.7)';
+          else if (isCausalStarved) arcColor = 'rgba(139, 92, 246, 0.7)';
+          else if (isCausal) arcColor = 'rgba(239, 68, 68, 0.7)';
+
+          ctx.strokeStyle = arcColor;
+          ctx.lineWidth = isCausal ? 2.2 : 1;
           ctx.beginPath();
           ctx.arc((x + x2) / 2, arcY, (x2 - x) / 2, Math.PI, 0);
           ctx.stroke();
         }
 
-        const color = st.isBottleneck ? '#EF4444' : st.isPredictedBottleneck ? '#FFAB40' : st.zone === 'Body' ? '#00E5FF' : st.zone === 'Paint' ? '#29B6F6' : '#10B981';
+        let color = '#00E5FF';
+        if (st.isBottleneck) color = '#EF4444';
+        else if (st.isPredictedBottleneck) color = '#FFAB40';
+        else if (st.isBlocked) color = '#F59E0B';
+        else if (st.isStarved) color = '#8B5CF6';
+        else if (st.zone === 'Paint') color = '#29B6F6';
+        else if (st.zone === 'Assembly') color = '#10B981';
+
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.arc(x, arcY, st.isBottleneck ? 6 : 4, 0, Math.PI * 2);
+        ctx.arc(x, arcY, st.isBottleneck ? 7 : (st.isBlocked || st.isStarved) ? 5.5 : 4, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
         ctx.font = '600 7px Inter';
         ctx.textAlign = 'center';
         ctx.fillText(st.id, x, arcY + 14);
@@ -4797,10 +4847,10 @@ document.addEventListener('DOMContentLoaded', () => {
     sim.stations.forEach((st, i) => {
       const x = pad + i * step;
       const y = midY;
-      const isAlert = st.isBottleneck || st.isPredictedBottleneck;
+      const isAlert = st.isBottleneck || st.isPredictedBottleneck || st.isBlocked || st.isStarved;
       const isSelected = st.id === selectedStationId;
       const isHovered = st.id === miniMapHoverId;
-      const color = st.isBottleneck ? '#ef4444' : st.isPredictedBottleneck ? '#ffab40' : '#10b981';
+      const color = st.isBottleneck ? '#ef4444' : st.isPredictedBottleneck ? '#ffab40' : st.isBlocked ? '#f59e0b' : st.isStarved ? '#8b5cf6' : '#10b981';
 
       // Soft glow halo for anything flagged, so a bottleneck is unmistakable
       if (isAlert || isHovered || isSelected) {
@@ -4925,6 +4975,17 @@ document.addEventListener('DOMContentLoaded', () => {
       switchTab('supervisor');
       showToast(`Jumped to ${hit.id} — ${hit.name || ''}`, 'info');
     });
+
+    const toggleBtn = document.getElementById('btn-toggle-minimap');
+    const miniMapContainer = document.getElementById('mini-map');
+    if (toggleBtn && miniMapContainer) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isCollapsed = miniMapContainer.classList.toggle('collapsed');
+        toggleBtn.textContent = isCollapsed ? '▲' : '▼';
+        toggleBtn.title = isCollapsed ? 'Expand Line Overview' : 'Collapse Line Overview';
+      });
+    }
   }
 
   // Kick off
