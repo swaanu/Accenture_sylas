@@ -4280,8 +4280,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('canvas-throughput-wave');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const w = canvas.width = canvas.clientWidth;
-    const h = canvas.height = canvas.clientHeight || 190;
+    const w = canvas.width = canvas.clientWidth || 360;
+    const h = canvas.height = 185;
     ctx.clearRect(0, 0, w, h);
 
     const metrics = sim.getSummaryMetrics();
@@ -4431,8 +4431,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('canvas-entropy-gauge');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const w = canvas.width = canvas.clientWidth;
-    const h = canvas.height = canvas.clientHeight || 190;
+    const w = canvas.width = canvas.clientWidth || 360;
+    const h = canvas.height = 185;
     ctx.clearRect(0, 0, w, h);
 
     const stations = sim.stations;
@@ -4445,9 +4445,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (entropyHistory.length > 150) entropyHistory.shift();
 
     // Left half: Gauge arc
-    const gaugeX = w * 0.3;
-    const gaugeY = h * 0.55;
-    const gaugeR = Math.min(gaugeX, gaugeY) * 0.7;
+    const gaugeX = Math.min(w * 0.28, 80);
+    const gaugeY = h * 0.50;
+    const gaugeR = Math.min(gaugeX, gaugeY) * 0.72;
     const startAngle = Math.PI * 0.8;
     const endAngle = Math.PI * 2.2;
     const totalArc = endAngle - startAngle;
@@ -4455,7 +4455,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Background arc
     ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 10;
+    ctx.lineWidth = 8;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.arc(gaugeX, gaugeY, gaugeR, startAngle, endAngle);
@@ -4464,10 +4464,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Value arc with gradient
     const arcColor = entropy > 60 ? '#EF4444' : entropy > 30 ? '#FFAB40' : '#10B981';
     ctx.strokeStyle = arcColor;
-    ctx.lineWidth = 10;
+    ctx.lineWidth = 8;
     ctx.lineCap = 'round';
     ctx.shadowColor = arcColor;
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 10;
     ctx.beginPath();
     ctx.arc(gaugeX, gaugeY, gaugeR, startAngle, valueAngle);
     ctx.stroke();
@@ -4475,19 +4475,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Center value
     ctx.fillStyle = arcColor;
-    ctx.font = '800 22px Inter';
+    ctx.font = '800 16px Inter';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${entropy.toFixed(0)}%`, gaugeX, gaugeY - 4);
+    ctx.fillText(`${entropy.toFixed(0)}%`, gaugeX, gaugeY - 3);
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = '600 8px Inter';
-    ctx.fillText('ENTROPY', gaugeX, gaugeY + 14);
+    ctx.font = '600 7px Inter';
+    ctx.fillText('ENTROPY', gaugeX, gaugeY + 12);
 
     // Right half: Entropy history sparkline
-    const chartX = w * 0.55;
-    const chartW = w * 0.42;
-    const chartY = 20;
-    const chartH = h - 40;
+    const chartX = Math.max(w * 0.44, gaugeX + gaugeR + 15);
+    const chartW = w - chartX - 10;
+    const chartY = 16;
+    const chartH = h - 32;
 
     if (entropyHistory.length > 2) {
       const min = 0;
@@ -4562,8 +4562,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('canvas-dependency-network');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const w = canvas.width = canvas.clientWidth;
-    const h = canvas.height = canvas.clientHeight || 190;
+    const w = canvas.width = canvas.clientWidth || 400;
+    const h = canvas.height = 185;
     ctx.clearRect(0, 0, w, h);
 
     const stations = sim.stations;

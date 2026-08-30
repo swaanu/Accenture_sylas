@@ -1708,8 +1708,19 @@ main { padding: 1rem 1.5rem; max-width: 1920px; margin: 0 auto; }
     margin-bottom: 1.5rem;
 }
 .topology-card {
-    min-height: 250px;
-    padding: 0.85rem 0.95rem 0.75rem 0.95rem;
+    height: 275px;
+    max-height: 275px;
+    padding: 0.75rem 0.85rem 0.65rem 0.85rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.topology-card canvas {
+    height: 185px !important;
+    max-height: 185px !important;
+    width: 100% !important;
+    display: block;
+    box-sizing: border-box;
 }
 @media (max-width: 1350px) {
     .topology-composite-grid {
