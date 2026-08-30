@@ -1,13 +1,13 @@
 // DigitalTwin.ai Core Engine Assertions Test Suite
-const fs = require('fs');
 const path = require('path');
 global.window = global;
 global.performance = { now: () => Date.now() };
-eval(fs.readFileSync(path.join(__dirname, '../simulationEngine.js'), 'utf-8'));
-eval(fs.readFileSync(path.join(__dirname, '../dataGapEngine.js'), 'utf-8'));
-eval(fs.readFileSync(path.join(__dirname, '../evidenceEngine.js'), 'utf-8'));
-eval(fs.readFileSync(path.join(__dirname, '../predictiveEngine.js'), 'utf-8'));
-eval(fs.readFileSync(path.join(__dirname, '../qualityThreadEngine.js'), 'utf-8'));
+
+const SimulationEngine = require('../simulationEngine');
+const DataGapEngine = require('../dataGapEngine');
+const EvidenceEngine = require('../evidenceEngine');
+const PredictiveEngine = require('../predictiveEngine');
+const QualityThreadEngine = require('../qualityThreadEngine');
 
 window.simEngine = new SimulationEngine();
 window.dataGapEngine = new DataGapEngine();

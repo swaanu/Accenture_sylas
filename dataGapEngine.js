@@ -297,5 +297,11 @@ class DataGapEngine {
     }
 }
 
-// Attach to window
-window.dataGapEngine = new DataGapEngine();
+// Attach to window if in browser
+if (typeof window !== 'undefined') {
+    window.dataGapEngine = new DataGapEngine();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = DataGapEngine;
+}

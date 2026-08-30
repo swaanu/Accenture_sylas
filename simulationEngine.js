@@ -1928,28 +1928,34 @@ class SimulationEngine {
 }
 
 // Multi-Line Instancing (Layer 6)
-window.DEFAULT_LINE_CONFIGS = DEFAULT_LINE_CONFIGS;
-window.lineInstances = {
-    'line-benchmark': new SimulationEngine(DEFAULT_LINE_CONFIGS['line-benchmark']),
-    'line-legacy': new SimulationEngine(DEFAULT_LINE_CONFIGS['line-legacy']),
-    'line-modern': new SimulationEngine(DEFAULT_LINE_CONFIGS['line-modern'])
-};
-window.activeLineId = 'line-benchmark';
-window.simEngine = window.lineInstances['line-benchmark'];
+if (typeof window !== 'undefined') {
+    window.DEFAULT_LINE_CONFIGS = DEFAULT_LINE_CONFIGS;
+    window.lineInstances = {
+        'line-benchmark': new SimulationEngine(DEFAULT_LINE_CONFIGS['line-benchmark']),
+        'line-legacy': new SimulationEngine(DEFAULT_LINE_CONFIGS['line-legacy']),
+        'line-modern': new SimulationEngine(DEFAULT_LINE_CONFIGS['line-modern'])
+    };
+    window.activeLineId = 'line-benchmark';
+    window.simEngine = window.lineInstances['line-benchmark'];
 
-window.switchSimulationLine = function(lineId) {
-    if (!window.lineInstances[lineId]) {
-        console.warn('Line not found:', lineId);
-        return null;
-    }
-    window.activeLineId = lineId;
-    window.simEngine = window.lineInstances[lineId];
-    return window.simEngine;
-};
+    window.switchSimulationLine = function(lineId) {
+        if (!window.lineInstances[lineId]) {
+            console.warn('Line not found:', lineId);
+            return null;
+        }
+        window.activeLineId = lineId;
+        window.simEngine = window.lineInstances[lineId];
+        return window.simEngine;
+    };
 
-window.getAllLinesComparison = function() {
-    return Object.keys(window.lineInstances).map(key => {
-        const engine = window.lineInstances[key];
-        return engine.getTwinHealthScore();
-    });
-};
+    window.getAllLinesComparison = function() {
+        return Object.keys(window.lineInstances).map(key => {
+            const engine = window.lineInstances[key];
+            return engine.getTwinHealthScore();
+        });
+    };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SimulationEngine;
+}

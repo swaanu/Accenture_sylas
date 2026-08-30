@@ -542,4 +542,10 @@ class PredictiveEngine {
     }
 }
 
-window.predictiveEngine = new PredictiveEngine();
+if (typeof window !== 'undefined') {
+    window.predictiveEngine = new PredictiveEngine();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = PredictiveEngine;
+}

@@ -40,7 +40,7 @@
 
             function check(cond, name, detail) {
                 total++;
-                if (cond) paso++;
+                if (cond) pass++;
                 results.push({ test: name, passed: !!cond, detail: detail || '' });
             }
 
@@ -132,7 +132,7 @@
             container.innerHTML = results.map(r => `
                 <div class="test-item">
                     <div>
-                        <strong>:${r.test}</strong>
+                        <strong>${r.test}</strong>
                         <div style="color:#94A3B8; font-size:0.75rem;">${r.detail}</div>
                     </div>
                     <span class="${r.passed ? 'badge-pass' : 'badge-fail'}">${r.passed ? 'PASS' : 'FAIL'}</span>

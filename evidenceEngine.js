@@ -455,4 +455,10 @@ class EvidenceEngine {
     }
 }
 
-window.evidenceEngine = new EvidenceEngine();
+if (typeof window !== 'undefined') {
+    window.evidenceEngine = new EvidenceEngine();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = EvidenceEngine;
+}

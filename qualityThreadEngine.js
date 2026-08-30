@@ -233,4 +233,10 @@ class QualityThreadEngine {
     }
 }
 
-window.qualityThreadEngine = new QualityThreadEngine();
+if (typeof window !== 'undefined') {
+    window.qualityThreadEngine = new QualityThreadEngine();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = QualityThreadEngine;
+}
