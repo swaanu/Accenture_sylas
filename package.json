@@ -1,0 +1,19 @@
+{
+  "name": "digitaltwin-ai",
+  "version": "1.0.0",
+  "description": "Physics-Informed Digital Twin of Automotive Assembly Line Flow",
+  "main": "app.js",
+  "scripts": {
+    "start": "python server.py",
+    "test": "python test_runner.py"
+  },
+  "keywords": [
+    "digital-twin",
+    "manufacturing",
+    "physics-informed-neural-networks",
+    "theory-of-constraints",
+    "quality-traceability"
+  ],
+  "author": "DigitalTwin.ai Team",
+  "license": "MIT"
+}

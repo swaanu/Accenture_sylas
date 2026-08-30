@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigitalTwin.ai - Assembly Line Flow Twin</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Initializing Digital Twin...</div>
+    </div>
+
+    <!-- Background -->
+    <canvas id="particle-bg"></canvas>
+
+    <!-- UI Overlays -->
+    <div id="toast-container"></div>
+
+    <div id="context-menu" class="context-menu ctx-menu">
+        <div class="ctx-item">View Details</div>
+        <div class="ctx-item">Deploy Sensor</div>
+        <div class="ctx-item">Run What-If</div>
+        <div class="ctx-item">View Telemetry</div>
+        <div class="ctx-item">Mark Maintenance</div>
+    </div>
+
+    <div id="shortcuts-modal" class="shortcuts-modal">
+        <div class="glass-card modal-content">
+            <h3>Keyboard Shortcuts</h3>
+            <ul>
+                <li><code>Space</code> Play / Pause Simulation</li>
+                <li><code>S</code> Step Forward</li>
+                <li><code>1-5</code> Switch Stakeholder Views</li>
+                <li><code>?</code> Toggle Shortcuts</li>
+                <li><code>Esc</code> Close Modals</li>
+            </ul>
+            <button class="btn ripple">Close</button>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="brand">
+            <div class="brand-badge">DIGITALTWIN.AI</div>
+            <div class="brand-text">
+                <h1>Assembly Line Flow Twin</h1>
+                <span class="tagline">Watching the line closely enough to catch a bottleneck before it happens</span>
+            </div>
+        </div>
+        
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-view="supervisor">Floor Supervisor (Real-time)</button>
+            <button class="tab-btn" data-view="manager">Plant Manager (Weekly Trends)</button>
+            <button class="tab-btn" data-view="leadership">Leadership (Rollout &amp; ROI)</button>
+            <button class="tab-btn" data-view="modelling">Modelling &amp; Physics</button>
+            <button class="tab-btn" data-view="predictive">Predictive Techniques</button>
+        </nav>
+
+        <div class="header-status">
+            <div id="shift-indicator">
+                <span class="shift-badge morning">Morning Shift</span>
+                <div class="fatigue-bar-container"><div class="fatigue-bar" style="width: 25%"></div></div>
+            </div>
+            <div id="environment-display" class="env-gauge">
+                <span>Temp: 22°C</span> | <span>Hum: 45%</span>
+            </div>
+        </div>
+
+        <div class="sim-controls">
+            <div class="line-selector-wrapper" style="display:flex; align-items:center; gap:0.4rem; margin-right:0.25rem;">
+                <span style="font-size:0.65rem; color:#00E5FF; font-weight:700; text-transform:uppercase;">Line:</span>
+                <select id="select-line-instance" class="glass-card" style="padding:4px 8px; font-size:0.75rem; color:#fff; background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.3); border-radius:6px; cursor:pointer;" onchange="window.handleLineSwitch(this.value)">
+                    <option value="line-benchmark">Line Alpha (Benchmark 35-Stn · 70% IoT)</option>
+                    <option value="line-legacy">Line Beta (Legacy Detroit 50-Stn · 40% IoT)</option>
+                    <option value="line-modern">Line Gamma (Austin Gigafactory 30-Stn · 90% IoT)</option>
+                </select>
+            </div>
+            <select id="select-scenario" class="select-scenario glass-card">
+                <option value="normal">⚡ Normal Operations</option>
+                <option value="s1">🔩 Scenario 1: Loose Bolt S4</option>
+                <option value="s2">🔥 Scenario 2: Oven Heat S16</option>
+                <option value="s3">📡 Scenario 3: Stale Data S12</option>
+                <option value="s4">⛓️ Scenario 4: Conveyor Jam S22</option>
+                <option value="s5">🤖 Scenario 5: Robot Arm Failure S8</option>
+            </select>
+            <button id="btn-play-pause" class="btn ripple">⏸</button>
+            <button id="btn-step" class="btn ripple">⏭</button>
+            <select id="select-speed" class="glass-card">
+                <option value="1">1x</option>
+                <option value="2">2x</option>
+                <option value="5">5x</option>
+            </select>
+            <div id="display-clock" class="clock">10:45 AM</div>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <!-- VIEW 1: Floor Supervisor -->
+        <section id="view-supervisor" class="view-section active">
+            <div class="hero-banner glass-card hero-photo" style="--hero-img:url('assembly_line_robot.jpg');">
+                <h2>Floor Supervisor: Catching Bottlenecks While There's Time to Act</h2>
+                <p class="principle-callout" style="margin-top:0.15rem; font-size:0.8rem; color:#4FC3F7;">Operational Scope: rolling 0–60 min horizon • continuous telemetry observation, evidence verification &amp; assisted human decisions</p>
+                
+                <div id="decision-loop-container" class="decision-loop">
+                    <div class="loop-node active" id="node-obs">Observe</div>
+                    <div class="loop-arrow"></div>
+                    <div class="loop-node" id="node-prd">Predict</div>
+                    <div class="loop-arrow"></div>
+                    <div class="loop-node" id="node-ver">Verify</div>
+                    <div class="loop-arrow"></div>
+                    <div class="loop-node" id="node-sim">Simulate</div>
+                    <div class="loop-arrow"></div>
+                    <div class="loop-node" id="node-dec">Decide</div>
+                    <div class="loop-arrow"></div>
+                    <div class="loop-node" id="node-lrn">Learn</div>
+                    <div class="loop-tagline">Human + AI in the Loop</div>
+                </div>
+            </div>
+
+            <div class="stats-row grid-7">
+                <div class="stat-card glass-card">
+                    <span class="label">Total WIP</span>
+                    <span id="stat-total-wip" class="value">245</span>
+                </div>
+                <div class="stat-card glass-card">
+                    <span class="label">Active Bottleneck</span>
+                    <span id="stat-active-bottleneck" class="value alert">S12</span>
+                </div>
+                <div class="stat-card glass-card">
+                    <span class="label">Predicted Bottleneck</span>
+                    <span id="stat-predicted-bottleneck" class="value warn">S18</span>
+                </div>
+                <div class="stat-card glass-card">
+                    <span class="label">System Trust Score</span>
+                    <span id="stat-trust-score" class="value success">94%</span>
+                </div>
+                <div class="stat-card glass-card">
+                    <span class="label">Completed</span>
+                    <span id="stat-completed-count" class="value">102</span>
+                </div>
+                <div class="stat-card glass-card">
+                    <span class="label">Throughput Rate</span>
+                    <span id="stat-throughput-rate" class="value">42/hr</span>
+                </div>
+                <div class="stat-card glass-card">
+                    <span class="label">Overall OEE</span>
+                    <span id="stat-oee" class="value">88%</span>
+                </div>
+            </div>
+
+            <div class="conveyor-container glass-card">
+                <div class="view-mode-bar" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:0.5rem;">
+                        <span>🏭 DIGITAL TWIN LINE VISUALIZER</span>
+                        <span id="line-mode-badge" style="font-size:0.65rem; padding:0.15rem 0.5rem; background:rgba(0,229,255,0.15); border-radius:10px; color:#00E5FF;">1-to-1 Aligned View</span>
+                    </div>
+                    <div class="btn-group-sm" style="display:flex; gap:0.3rem;">
+                        <button class="mode-btn active" id="btn-mode-2d">🛤️ Track Flow</button>
+                        <button class="mode-btn" id="btn-mode-3d">🧊 3D Isometric</button>
+                        <button class="mode-btn" id="btn-mode-energy">⚡ Energy & Thermal</button>
+                    </div>
+                </div>
+                <canvas id="canvas-conveyor" height="100"></canvas>
+                <div id="stations-strip" class="stations-strip"></div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Left Card: Station Inspector -->
+                <div class="glass-card inspector-card">
+                    <div class="card-header">
+                        <h3 id="selected-station-title">Station S12 Inspector</h3>
+                        <span id="selected-station-equipment" class="badge-tag">Robotic Welder</span>
+                    </div>
+                    
+                    <div class="telemetry-tab-bar" style="display:flex; gap:0.3rem; margin-bottom:0.5rem;">
+                        <button class="tel-tab-btn active" id="tab-tel-osc">📈 Oscilloscope</button>
+                        <button class="tel-tab-btn" id="tab-tel-spc">📊 SPC Limits (Cpk)</button>
+                        <button class="tel-tab-btn" id="tab-tel-fft">⚡ Harmonic Spectrum</button>
+                    </div>
+
+                    <canvas id="canvas-telemetry" height="120"></canvas>
+                    <div id="telemetry-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.75rem;"></div>
+                    
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                        <div id="evidence-dial-container" style="width: 70px; height: 70px; flex-shrink: 0;"></div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div id="trust-breakdown-list" style="display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.75rem;"></div>
+                            <div id="station-evidence-rec" style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.35rem; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 0.5rem;"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="retrofit-action-container" class="action-container"></div>
+                    <div id="pinn-model-box" class="physics-terminal"></div>
+                </div>
+
+                <!-- Right Card: Root Cause Analyzer -->
+                <div class="glass-card analyzer-card">
+                    <h3>Root Cause Analyzer</h3>
+                    
+                    <div id="downtime-financial-card" style="display:none; margin:0.5rem 0; padding:0.6rem 0.75rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.75rem; font-weight:700; color:#EF4444;">💸 Live Downtime Financial Impact:</span>
+                            <span id="financial-loss-ticker" style="font-size:0.95rem; font-weight:900; font-family:var(--font-mono); color:#EF4444;">$0</span>
+                        </div>
+                        <div style="font-size:0.65rem; color:#aaa; margin-top:0.2rem;">Bottleneck stalling production rate at ~$240/min in delayed assembly delivery</div>
+                    </div>
+
+                    <div id="multicausal-matrix-container" class="matrix-container"></div>
+                    
+                    <div class="intervention-panel glass-card">
+                        <h4>🎛️ Intervention Simulator <span id="intervention-station-badge" style="font-size:0.7rem; color:#00E5FF; background:rgba(0,229,255,0.1); padding:2px 8px; border-radius:10px; margin-left:0.5rem;">S4</span></h4>
+                        
+                        <div class="intervention-controls-row">
+                            <div class="intervention-gauge-wrap">
+                                <canvas id="canvas-speed-gauge" width="120" height="80"></canvas>
+                                <input type="range" min="70" max="130" value="100" id="sim-speed-slider" class="speed-slider styled-range">
+                                <span class="gauge-label">Speed <strong id="speed-val-label">100%</strong></span>
+                            </div>
+                            <div class="intervention-gauge-wrap">
+                                <canvas id="canvas-buffer-gauge" width="120" height="80"></canvas>
+                                <input type="range" min="0" max="4" value="2" id="sim-buffer-slider" class="buffer-slider styled-range">
+                                <span class="gauge-label">Buffer <strong id="buffer-val-label">2</strong></span>
+                            </div>
+                        </div>
+
+                        <button id="btn-run-simulation" class="btn simulate-btn ripple">🎲 Monte Carlo What-If (500 Scenarios)</button>
+                        
+                        <canvas id="canvas-mc-histogram" width="400" height="120" style="width:100%; border-radius:8px; margin-top:0.5rem;"></canvas>
+                        
+                        <div id="outcome-preview-box" class="outcome-box">
+                            <div class="mc-results-grid" id="mc-results-grid"></div>
+                        </div>
+                        
+                        <canvas id="canvas-intervention-impact" width="400" height="90" style="width:100%; border-radius:8px;"></canvas>
+                        
+                        <button id="btn-approve-action" class="btn ripple success-btn">✅ Approve & Apply Action</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Vehicle Quality Thread & Unit-Level Traceability (Layer 3) -->
+                <div class="glass-card thread-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <h3 style="margin-bottom:0;">Vehicle Quality Thread &amp; Unit Traceability</h3>
+                        <button id="btn-backward-trace" class="btn btn-primary btn-sm" onclick="window.runBackwardTrace()" style="font-size:0.7rem; padding:4px 10px; background:linear-gradient(135deg, #EF4444, #B91C1C); border:none; box-shadow:0 0 10px rgba(239,68,68,0.4); cursor:pointer;">
+                            ⚡ Run Backward Trace (Suspect Window)
+                        </button>
+                    </div>
+                    <div id="vin-chip-container" class="chip-container"></div>
+                    <div class="thread-info">
+                        <span id="thread-vin-title" class="vin-title">VIN: 1B4...</span>
+                        <span id="thread-detected-gate" class="badge-tag">Gate 4</span>
+                        <p id="thread-defect-desc" class="defect-desc">Paint anomaly</p>
+                    </div>
+                    <div class="grid-2 inner-grid">
+                        <div class="info-panel">
+                            <ul id="thread-timeline-list" class="thread-timeline"></ul>
+                        </div>
+                        <div class="graph-panel">
+                            <canvas id="canvas-network-graph" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Layer 3: Ranked Recall Set Panel -->
+                    <div id="recall-set-panel" style="margin-top:1rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.08);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                            <div>
+                                <span style="font-weight:700; color:#EF4444; font-size:0.82rem;">🔍 Ranked Recall Set — Likely Affected Units</span>
+                                <span id="recall-station-label" style="font-size:0.7rem; color:#4FC3F7; margin-left:0.5rem;">Suspect Station: S4</span>
+                            </div>
+                            <span id="recall-exposure-badge" class="badge-tag" style="background:rgba(239,68,68,0.15); color:#EF4444; font-size:0.65rem;">$336k Est. Value at Risk</span>
+                        </div>
+                        <div id="recall-summary-metrics" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.4rem; margin-bottom:0.6rem;"></div>
+                        <div id="recall-ranked-list" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:0.35rem;"></div>
+                    </div>
+                </div>
+
+                <!-- Live Activity Feed -->
+                <div class="glass-card feed-card">
+                    <h3>Live Activity Feed <span class="badge-tag live-badge">● LIVE</span></h3>
+                    <div id="live-activity-feed" class="activity-feed">
+                        <ul id="live-activity-feed-list" class="activity-feed-list"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entangled System State Visualization -->
+            <div class="glass-card entangled-card" style="margin-top:1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                    <h3>⚛️ Entangled System State — Cross-Station Coupling Matrix</h3>
+                    <span class="badge-tag live-badge" style="font-size:0.6rem;">● REAL-TIME CORRELATION</span>
+                </div>
+                <canvas id="canvas-entangled-state" height="280"></canvas>
+                <div id="entangled-legend" style="display:flex; gap:1rem; margin-top:0.5rem; font-size:0.7rem; color:var(--text-muted); justify-content:center;"></div>
+            </div>
+
+            <div class="grid-2" style="margin-top:1rem;">
+                <!-- Throughput Waveform Analyzer -->
+                <div class="glass-card">
+                    <h3>📊 Throughput Waveform — Phase Coherence Analysis</h3>
+                    <canvas id="canvas-throughput-wave" height="180"></canvas>
+                    <div id="throughput-wave-stats" style="display:flex; gap:1rem; margin-top:0.5rem; font-size:0.7rem;"></div>
+                </div>
+                <!-- System Entropy Gauge -->
+                <div class="glass-card">
+                    <h3>🌡️ System Entropy & Stability Index</h3>
+                    <canvas id="canvas-entropy-gauge" height="180"></canvas>
+                    <div id="entropy-stats" style="display:flex; gap:1rem; margin-top:0.5rem; font-size:0.7rem;"></div>
+                </div>
+            </div>
+
+            <!-- Dependency Network Graph -->
+            <div class="glass-card" style="margin-top:1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                    <h3>🕸️ Station Dependency Network — Causal Influence Topology</h3>
+                    <div class="btn-group-sm" style="display:flex; gap:0.3rem;">
+                        <button class="mode-btn active" id="btn-dep-force">Force-Directed</button>
+                        <button class="mode-btn" id="btn-dep-arc">Arc Diagram</button>
+                    </div>
+                </div>
+                <canvas id="canvas-dependency-network" height="320"></canvas>
+            </div>
+        </section>
+
+        <!-- VIEW 2: Modelling Approach -->
+        <section id="view-modelling" class="view-section">
+            <div class="hero-banner glass-card hero-photo" style="--hero-img:url('digital_twin_car.jpg');">
+                <h2>The Modelling Approach: Knowing What to Measure Directly and What to Infer</h2>
+                <p class="principle-callout">We call this Minimum Sufficient Fidelity: the model only represents what a decision actually depends on, not every last detail of the factory floor</p>
+            </div>
+
+            <div class="glass-card assumptions-card" style="margin-bottom: 1.5rem;">
+                <h3>Line Topology &amp; Operating Assumptions</h3>
+                <p class="subtitle">The operating assumptions below were chosen deliberately so the model generalizes across OEMs rather than being tuned to one factory's quirks</p>
+                <div class="grid-3" style="margin-top: 1rem; text-align: left;">
+                    <div style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #3B82F6;">
+                        <h4 style="color: #3B82F6;">🏭 35-Station Mixed-Model Line</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            The line spans <strong>Body Construction</strong> (S1 to S10), the <strong>Paint Shop</strong> (S11 to S20), and <strong>Final Assembly</strong> (S21 to S35), and it was built to route EV, hybrid, and combustion variants down the same physical stations without anyone having to reconfigure anything by hand.
+                        </p>
+                        <div style="font-size: 0.75rem; font-family: var(--font-mono); color: #3B82F6; margin-top: 0.5rem;">● Topology: 3 Zones / 35 Stations</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #FFAB40;">
+                        <h4 style="color: #FFAB40;">⚖️ Uneven Sensor Coverage</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Roughly <strong>68% of stations are well-instrumented</strong> with automated telemetry, while the remaining <strong>32% are sensor-poor</strong> and depend on manual operator checks plus physics-informed or spatial estimation to fill the gap. That imbalance is realistic, and it's exactly the situation the model is designed to handle gracefully.
+                        </p>
+                        <div style="font-size: 0.75rem; font-family: var(--font-mono); color: #FFAB40; margin-top: 0.5rem;">● Instrumented: 24 | Manual/Inferred: 11</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #10B981;">
+                        <h4 style="color: #10B981;">⏱️ Maintenance Window Retrofits</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            New non-invasive IoT sensing only goes in during the <strong>two scheduled shutdowns each year</strong> or during shift breaks shorter than 15 minutes, so instrumenting a sensor-poor station never costs the plant a minute of production time.
+                        </p>
+                        <div style="font-size: 0.75rem; font-family: var(--font-mono); color: #10B981; margin-top: 0.5rem;">● Downtime Impact: 0 Hours</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="glass-card modelling-card">
+                    <h3>Explicitly Measured Parameters</h3>
+                    <table class="data-table modelling-table" id="explicit-params-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Unit</th>
+                                <th>Source</th>
+                                <th>Stations Covered</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="explicit-param-cycle">
+                                <td>Cycle Time</td>
+                                <td>seconds</td>
+                                <td>Direct Timer</td>
+                                <td>S1-S35</td>
+                                <td><div class="conf-bar"><div class="fill" style="width: 98%">98%</div></div></td>
+                            </tr>
+                            <tr id="explicit-param-torque">
+                                <td>Torque</td>
+                                <td>Nm</td>
+                                <td>DC Tool Telemetry</td>
+                                <td>22 stations</td>
+                                <td><div class="conf-bar"><div class="fill" style="width: 95%">95%</div></div></td>
+                            </tr>
+                            <tr id="explicit-param-temp">
+                                <td>Temperature</td>
+                                <td>°C</td>
+                                <td>Thermocouple/IR</td>
+                                <td>28 stations</td>
+                                <td><div class="conf-bar"><div class="fill" style="width: 97%">97%</div></div></td>
+                            </tr>
+                            <tr id="explicit-param-vib">
+                                <td>Vibration</td>
+                                <td>g</td>
+                                <td>Accelerometer</td>
+                                <td>18 stations</td>
+                                <td><div class="conf-bar"><div class="fill" style="width: 93%">93%</div></div></td>
+                            </tr>
+                            <tr id="explicit-param-thru">
+                                <td>Throughput</td>
+                                <td>cars/hr</td>
+                                <td>Line Counter</td>
+                                <td>All</td>
+                                <td><div class="conf-bar"><div class="fill" style="width: 99%">99%</div></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="glass-card modelling-card">
+                    <h3>Indirectly Inferred Parameters (Sensor-Poor Stations)</h3>
+                    <table class="data-table modelling-table" id="inferred-params-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Inference Method</th>
+                                <th>Stations</th>
+                                <th>Confidence</th>
+                                <th>Validation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated dynamically -->
+                            <tr><td colspan="5" style="text-align:center; color: var(--text-muted)">Loading inferred models...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid-4 inference-cards">
+                <div class="glass-card inference-card">
+                    <h4>📐 Physics-Informed (PINN)</h4>
+                    <p>When a station has no working sensor, a physics-informed neural network fills the gap by simulating what the missing reading should look like, constrained by the actual physical equations that govern the process rather than a pure black-box guess.</p>
+                </div>
+                <div class="glass-card inference-card">
+                    <h4>📊 Neighbor Interpolation</h4>
+                    <p>For simpler parameters, we estimate a station's condition by weighting the readings from its instrumented neighbors, on the reasonable assumption that adjacent stations on the same line tend to drift in similar ways.</p>
+                </div>
+                <div class="glass-card inference-card">
+                    <h4>📈 Statistical Estimation</h4>
+                    <p>When neither physics nor neighboring sensors give us enough to work with, we fall back to historical distributions for that station, so the estimate is still grounded in what's actually happened there before rather than a flat default.</p>
+                </div>
+                <div class="glass-card inference-card">
+                    <h4>🧮 Kalman Filter Fusion</h4>
+                    <p>Where a station has a noisy or intermittent sensor rather than none at all, a Kalman filter blends the live but unreliable reading with the model's own prediction, weighting each side by how much it trusts it at that moment.</p>
+                </div>
+            </div>
+
+            <div class="glass-card coverage-card">
+                <h3>Sensor Coverage Map</h3>
+                <div id="modelling-coverage-strip" class="coverage-strip"></div>
+                <div id="modelling-station-detail" class="station-detail-panel">Click a station for breakdown</div>
+            </div>
+            
+            <div class="glass-card ot-integration-card" style="margin-top: 1.5rem;">
+                <h3>Non-Invasive OT &amp; Legacy PLC Integration</h3>
+                <p class="subtitle">We read from legacy operational technology, we never write to it, which means no production downtime and no changes to the plant's existing ladder logic</p>
+                <div class="grid-3" style="margin-top: 1rem; text-align: left;">
+                    <div style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #29B6F6;">
+                        <h4 style="color: #29B6F6;">🔌 Non-Intrusive Edge Tapping</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Passive OPC-UA and MQTT listeners simply poll the PLC's memory blocks from the outside, so timing-critical ladder loops keep running exactly as they always have. Because nothing about the control logic changes, there's no recertification to file and no shutdown required to install it.
+                        </p>
+                        <div style="font-size: 0.75rem; font-family: var(--font-mono); color: #10B981; margin-top: 0.5rem;">● Edge Listener: ACTIVE (0.2ms latency)</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #00E5FF;">
+                        <h4 style="color: #00E5FF;">🧲 Low-Cost Retrofit Sensing</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            For stations that genuinely have no usable signal, we retrofit with magnetic MEMS accelerometers, split-core current clamps that infer torque through an I²R proxy, and handheld IR guns for temperature. Each install takes under 15 minutes and needs nothing more invasive than a magnet or a clamp.
+                        </p>
+                        <div style="font-size: 0.75rem; font-family: var(--font-mono); color: #00E5FF; margin-top: 0.5rem;">● Retrofits Deployed: 14 stations</div>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid #10B981;">
+                        <h4 style="color: #10B981;">🛡️ OT/IT Air-Gap &amp; Data Diode</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            A one-way hardware data diode sits between the OT control network and the digital twin's cloud endpoints, so telemetry can flow out for analysis but nothing from the outside world can ever write back in.
+                        </p>
+                        <div style="font-size: 0.75rem; font-family: var(--font-mono); color: #10B981; margin-top: 0.5rem;">● Security Diode: ENFORCED</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layer 4: Cost/Accuracy Tradeoff & ROI Justification Table -->
+            <div class="glass-card sensor-roi-card" style="margin-top: 1.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                    <div>
+                        <h3 style="margin-bottom:0; color:#00E5FF;">💰 Cost / Accuracy Trade-off &amp; ROI Justification</h3>
+                        <p class="subtitle" style="margin-bottom:0;">Evaluating incremental low-cost IoT sensor additions ($20–$50/ea) vs. defect detection lead time and false-alarm suppression</p>
+                    </div>
+                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                        <button class="btn-scenario" style="padding:4px 10px; font-size:0.75rem; background:rgba(0,229,255,0.15); border:1px solid #00E5FF; color:#00E5FF;" onclick="window.deployZoneRetrofitSensors('all')">
+                            ⚡ Deploy Full Retrofit (11 Nodes)
+                        </button>
+                        <button class="btn-scenario" style="padding:4px 10px; font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:#fff;" onclick="window.deployZoneRetrofitSensors('Body')">
+                            + Body ($105)
+                        </button>
+                        <button class="btn-scenario" style="padding:4px 10px; font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:#fff;" onclick="window.deployZoneRetrofitSensors('Paint')">
+                            + Paint ($105)
+                        </button>
+                        <button class="btn-scenario" style="padding:4px 10px; font-size:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:#fff;" onclick="window.deployZoneRetrofitSensors('Assembly')">
+                            + Assembly ($175)
+                        </button>
+                        <button class="btn-scenario" style="padding:4px 10px; font-size:0.75rem; background:rgba(239,68,68,0.15); border:1px solid #EF4444; color:#EF4444;" onclick="window.resetToBaselineCoverage()">
+                            ↺ Reset 70/30 Baseline
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Summary KPI Strip -->
+                <div id="sensor-roi-summary-strip" class="metrics-grid grid-4" style="margin-top:1rem;">
+                    <!-- Populated dynamically by JS -->
+                </div>
+
+                <!-- ROI Projection Table -->
+                <div style="overflow-x:auto; margin-top:1rem;">
+                    <table class="data-table" style="width:100%; font-size:0.8rem;">
+                        <thead>
+                            <tr>
+                                <th>Deployment Level</th>
+                                <th>Hardware Capex</th>
+                                <th>Defect Lead Time</th>
+                                <th>False Alarm Rate</th>
+                                <th>System Trust</th>
+                                <th>Scrap/Warranty Avoidance</th>
+                                <th>Payback Period</th>
+                                <th>Active Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sensor-roi-projection-tbody">
+                            <!-- Populated dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Priority 5: Maintenance Window Safety Constraint Controls -->
+                <div class="maintenance-window-panel glass-card" style="margin-top:1rem; padding:0.75rem 1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; border:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.2);">
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <span style="font-size:0.8rem; font-weight:700; color:#4FC3F7;">🕒 Maintenance Window Safety Gate:</span>
+                        <span id="mw-status-badge" class="badge-tag" style="background:rgba(16,185,129,0.15); color:#10B981; font-size:0.65rem;">● WINDOW OPEN (Shift Changeover)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap;">
+                        <label style="font-size:0.72rem; color:#ccc; display:flex; align-items:center; gap:0.35rem; cursor:pointer;">
+                            <input type="checkbox" id="chk-enforce-mw" checked onchange="window.setMaintenanceWindowEnforcement(this.checked)">
+                            <span>Enforce OT Safety Rule (Block Retrofits Outside Window)</span>
+                        </label>
+                        <button id="btn-toggle-mw-window" class="btn btn-sm" style="font-size:0.68rem; padding:3px 9px; background:rgba(0,229,255,0.1); border:1px solid #00E5FF; color:#00E5FF; border-radius:4px; cursor:pointer;" onclick="window.toggleMaintenanceWindowManual()">
+                            ⚡ Toggle Maintenance Window (Simulate Active Shift / Window)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card sensor-gap-card" style="margin-top: 1.5rem;">
+                <h3>IoT Retrofit &amp; Low-Cost Sensors Catalog</h3>
+                <p class="subtitle">A running catalog of the cheap sensors we deploy to close specific blind spots, along with what each one costs and how much confidence it buys back</p>
+                <div id="low-cost-sensor-catalog-container" class="sensor-catalog"></div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: Predictive Techniques -->
+        <section id="view-predictive" class="view-section">
+            <div class="hero-banner glass-card hero-photo" style="--hero-img:url('quality_inspection.jpg');">
+                <h2>Predictive Techniques &amp; Model Validation Framework</h2>
+                <p class="principle-callout" style="margin-top:0.25rem; font-size:0.85rem; color:#4FC3F7;">We lean on Statistical Process Control, CUSUM and EWMA charts, physics-informed neural networks, and gradient-boosted defect predictions, but none of them get to act on their own until they've been checked against reality</p>
+            </div>
+
+            <div class="glass-card">
+                <h3>Statistical Process Control (X̄ &amp; R Charts) <span id="spc-station-badge" style="font-size:0.7rem; color:#00E5FF; background:rgba(0,229,255,0.1); padding:2px 8px; border-radius:10px; margin-left:0.5rem;">S4</span></h3>
+                <p class="subtitle">Western Electric Rules for out-of-control detection</p>
+                
+                <canvas id="canvas-spc-xbar" height="200"></canvas>
+                <canvas id="canvas-spc-range" height="120"></canvas>
+                
+                <div class="spc-metrics-row grid-4">
+                    <div class="metric"><span class="label">Cpk:</span> <span id="spc-cpk">1.34</span></div>
+                    <div class="metric"><span class="label">Ppk:</span> <span id="spc-ppk">1.28</span></div>
+                    <div class="metric"><span id="spc-in-control" class="badge-tag in-control-badge">In Control</span></div>
+                    <div class="metric"><span class="label">Violations:</span> <span id="spc-violations-count">0</span></div>
+                </div>
+                
+                <div class="western-electric-legend grid-4">
+                    <div>🔴 Rule 1: 1 point > 3σ</div>
+                    <div>🟠 Rule 2: 2 of 3 points > 2σ</div>
+                    <div>🟡 Rule 3: 4 of 5 points > 1σ</div>
+                    <div>🔵 Rule 4: 8 consecutive on one side</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="glass-card">
+                    <h3>Cumulative Sum (CUSUM) Control Chart <span id="cusum-station-badge" style="font-size:0.7rem; color:#00E5FF; background:rgba(0,229,255,0.1); padding:2px 8px; border-radius:10px; margin-left:0.5rem;">S4</span></h3>
+                    <canvas id="canvas-cusum" height="180"></canvas>
+                </div>
+                <div class="glass-card">
+                    <h3>Exponentially Weighted Moving Average <span id="ewma-station-badge" style="font-size:0.7rem; color:#00E5FF; background:rgba(0,229,255,0.1); padding:2px 8px; border-radius:10px; margin-left:0.5rem;">S4</span></h3>
+                    <canvas id="canvas-ewma" height="180"></canvas>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="glass-card">
+                    <h3>Physics-Informed Neural Network (PINN) Models</h3>
+                    <div id="physics-model-display" class="physics-terminal">
+                        <div class="term-line">Model: Thermal Dissipation PINN</div>
+                        <div class="term-line eq">∂T/∂t = α ∇²T + Q/ρC</div>
+                    </div>
+                    <canvas id="physics-residual-chart" height="120"></canvas>
+                </div>
+                
+                <div class="glass-card">
+                    <h3>ML-Based Bottleneck &amp; Defect Prediction</h3>
+                    <div id="ml-prediction-panel" class="prediction-panel">
+                        <div class="prediction-card"><span class="station">S18</span> <div class="prob-bar"><div class="fill alert" style="width: 85%">85% Risk</div></div></div>
+                    </div>
+                    <h4>Feature Importance</h4>
+                    <div id="ml-feature-importance" class="feature-importance-box">
+                        <div class="feature-bar"><span class="label">Cycle Variance</span> <div class="bar-fill" style="width: 70%"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card validation-card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <h3 style="margin-bottom:0;">How We Validate Before Trusting Output (Layer 4)</h3>
+                        <span class="badge-tag" style="background:rgba(0,229,255,0.15); color:#00E5FF; font-size:0.65rem; font-weight:700;">80/20 Real Holdout Split</span>
+                    </div>
+                    <span id="validation-trust-level" class="badge-tag trusted">TRUSTED SYSTEM</span>
+                </div>
+                <p class="subtitle">Real simulated train history (80%) &rarr; Unseen holdout slice (20%) &rarr; Confidence threshold tuning &rarr; Supervisor feedback loop</p>
+                
+                <div class="validation-flow">
+                    <div class="step">Shadow</div> ➔ <div class="step">Holdout</div> ➔ <div class="step">Threshold Tuning</div> ➔ <div class="step">Supervisor Feedback</div>
+                </div>
+
+                <!-- Layer 4: Interactive Confidence-Threshold Tuning Slider Widget -->
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:0.75rem 1rem; margin:1rem 0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                        <span style="font-weight:700; color:#00E5FF; font-size:0.85rem;">🎛️ Confidence-Threshold Tuning (τ)</span>
+                        <span id="threshold-val-badge" class="badge-tag" style="background:rgba(0,229,255,0.15); color:#00E5FF; font-weight:700; font-size:0.75rem;">τ = 50%</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:1rem;">
+                        <span style="font-size:0.7rem; color:#EF4444; white-space:nowrap;">Max Recall (10%)</span>
+                        <input id="confidence-threshold-slider" type="range" class="styled-range" min="10" max="90" value="50" style="flex:1;" oninput="window.updateConfidenceThreshold(this.value)">
+                        <span style="font-size:0.7rem; color:#10B981; white-space:nowrap;">Min False Alarms (90%)</span>
+                    </div>
+                    <div id="threshold-tradeoff-desc" style="font-size:0.72rem; color:var(--text-muted); margin-top:0.4rem;">
+                        Balanced operating point: High defect capture (88% Recall) with low false alarm rate (2.8% FAR).
+                    </div>
+                </div>
+                
+                <div id="validation-metrics-grid" class="metrics-grid grid-4">
+                    <div class="validation-metric-card" id="val-acc">Acc: 94.2%</div>
+                    <div class="validation-metric-card" id="val-prec">Prec: 91.5%</div>
+                    <div class="validation-metric-card" id="val-rec">Rec: 88.0%</div>
+                    <div class="validation-metric-card" id="val-f1">F1: 89.7%</div>
+                    <div class="validation-metric-card" id="val-far">FAR: 2.1%</div>
+                    <div class="validation-metric-card" id="val-mape">MAPE: 4.5%</div>
+                    <div class="validation-metric-card" id="val-rmse">RMSE: 1.2</div>
+                    <div class="validation-metric-card" id="val-r2">R²: 0.96</div>
+                </div>
+                
+                <div class="grid-2 inner-validation" style="margin-top: 1.5rem; align-items: start;">
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <h4 style="margin-bottom: 0.5rem;">Confusion Matrix (Live Ground Truth)</h4>
+                        <div id="predictive-confusion-matrix" class="confusion-matrix"></div>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">Model Comparison Matrix</h4>
+                        <div id="validation-model-comparison-table-container"></div>
+                    </div>
+                </div>
+
+                <!-- Layer 4: Supervisor Feedback & Calibration Panel -->
+                <div id="supervisor-feedback-panel" style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.08);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                        <h4 style="margin-bottom:0; color:#4FC3F7;">👨‍💼 Supervisor Feedback &amp; False-Alarm Recalibration Loop</h4>
+                        <span id="calibration-status-tag" class="badge-tag" style="background:rgba(16,185,129,0.15); color:#10B981; font-size:0.65rem;">● Dynamic Recalibration Active</span>
+                    </div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                        When floor supervisors verify or dismiss automated alerts, the feedback directly recalibrates station stress sensitivity and reduces future false alarms.
+                    </p>
+                    <div id="supervisor-action-list" style="display:flex; flex-direction:column; gap:0.4rem;"></div>
+                </div>
+                
+                <ul id="validation-history-list" class="history-list" style="margin-top:1rem;"></ul>
+            </div>
+
+            <div class="glass-card">
+                <h3>Anomaly Timeline</h3>
+                <div id="anomaly-timeline-container" class="anomaly-timeline">
+                    <!-- Dots added by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: Plant Manager (Weekly Trend View) -->
+        <section id="view-manager" class="view-section">
+            <div class="hero-banner glass-card hero-photo" style="--hero-img:url('quality_inspection.jpg');">
+                <h2>Plant Manager View: Weekly Utilization Trends &amp; Predictive Maintenance</h2>
+                <p class="principle-callout" style="margin-top:0.25rem; font-size:0.85rem; color:#4FC3F7;">Operational Scope: Rolling 1 shift to 7 days • Line balancing, shifting-bottleneck history, false-alarm trends, and equipment remaining useful life (RUL)</p>
+            </div>
+            
+            <div class="grid-2">
+                <div class="glass-card">
+                    <h3>Weekly Sensor Coverage &amp; Gap Audit</h3>
+                    <div id="sensor-coverage-matrix" class="matrix-grid"></div>
+                </div>
+                <div class="glass-card">
+                    <h3>Station Telemetry Heatmap</h3>
+                    <div id="station-heatmap" class="heatmap-grid"></div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h3>Shifting-Bottleneck Migration Timeline (Weekly Horizon)</h3>
+                <canvas id="canvas-bottleneck-migration" height="250"></canvas>
+            </div>
+
+            <div class="grid-2">
+                <div class="glass-card">
+                    <h3>Performance &amp; Quality Radar</h3>
+                    <canvas id="canvas-radar-chart" height="300"></canvas>
+                </div>
+                <div class="glass-card">
+                    <h3>Predictive Maintenance Schedule (RUL Tracking)</h3>
+                    <table id="predictive-maintenance-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Station</th>
+                                <th>Equipment</th>
+                                <th>RUL Remaining</th>
+                                <th>Urgency</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>S12</td><td>Welding Tip</td>
+                                <td><div class="rul-bar"><div class="fill" style="width: 20%">14h</div></div></td>
+                                <td><span class="urgency-badge high">High Risk</span></td>
+                                <td><button class="btn ripple">Order Replace</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: Executive Leadership (Rollout & ROI View) -->
+        <section id="view-leadership" class="view-section">
+            <div class="hero-banner glass-card hero-photo" style="--hero-img:url('assembly_line_robot.jpg');">
+                <h2>Executive Leadership: Multi-Site Scaling, Downtime Avoidance &amp; Capex ROI</h2>
+                <p class="principle-callout" style="margin-top:0.25rem; font-size:0.85rem; color:#4FC3F7;">Executive Scope: Multi-plant fleet comparison • Financial downtime avoidance, low-cost sensor payback, and enterprise rollout decision matrix</p>
+            </div>
+
+            <!-- Executive KPI Strip -->
+            <div class="metrics-grid grid-4" style="margin-bottom:1.5rem;">
+                <div class="glass-card" style="text-align:center; padding:1rem;">
+                    <div style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">TOTAL DOWNTIME LOSS AVOIDED</div>
+                    <div id="exec-savings-ticker" style="font-size:1.6rem; font-weight:800; color:#10B981; margin:0.3rem 0;">$482,400</div>
+                    <div style="font-size:0.65rem; color:#aaa;">$4,200/hr avoided line stops + warranty escapes</div>
+                </div>
+                <div class="glass-card" style="text-align:center; padding:1rem;">
+                    <div style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">LOW-COST SENSOR CAPEX</div>
+                    <div id="exec-capex-val" style="font-size:1.6rem; font-weight:800; color:#00E5FF; margin:0.3rem 0;">$385</div>
+                    <div style="font-size:0.65rem; color:#aaa;">11 Wireless IoT nodes ($35 avg/pack)</div>
+                </div>
+                <div class="glass-card" style="text-align:center; padding:1rem;">
+                    <div style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">ENTERPRISE PAYBACK PERIOD</div>
+                    <div id="exec-payback-val" style="font-size:1.6rem; font-weight:800; color:#FFAB40; margin:0.3rem 0;">0.5 Days</div>
+                    <div style="font-size:0.65rem; color:#aaa;">Net positive on Day 1 of deployment</div>
+                </div>
+                <div class="glass-card" style="text-align:center; padding:1rem;">
+                    <div style="font-size:0.65rem; color:var(--text-muted); font-weight:700;">FLEET TWIN HEALTH INDEX</div>
+                    <div id="exec-thi-val" style="font-size:1.6rem; font-weight:800; color:#4FC3F7; margin:0.3rem 0;">88.4 THI</div>
+                    <div style="font-size:0.65rem; color:#aaa;">Weighted cross-site normalized score</div>
+                </div>
+            </div>
+
+            <!-- Multi-Plant Site-Normalized Twin Health Comparison Matrix -->
+            <div class="glass-card multi-line-comparison-card" style="margin-bottom:1.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                    <div>
+                        <h3 style="margin-bottom:0; color:#00E5FF;">🌐 Multi-Plant Scalability &amp; Normalized Twin Health Comparison</h3>
+                        <p class="subtitle" style="margin-bottom:0;">Parameterized engine instancing across lines: comparing normalized Twin Health Index (THI) to prioritize rollout investments</p>
+                    </div>
+                    <span class="badge-tag trusted" style="font-size:0.7rem;">Config-Driven Multi-Plant Architecture</span>
+                </div>
+
+                <div id="multi-line-health-cards-container" class="grid-3" style="margin-top:1rem;">
+                    <!-- Dynamic line health cards -->
+                </div>
+
+                <div style="overflow-x:auto; margin-top:1rem;">
+                    <table class="data-table" style="width:100%; font-size:0.8rem;">
+                        <thead>
+                            <tr>
+                                <th>Line Instance / Facility</th>
+                                <th>Stations</th>
+                                <th>Sensor IoT %</th>
+                                <th>Target JPH</th>
+                                <th>Actual JPH</th>
+                                <th>Quality Yield</th>
+                                <th>Twin Health (THI)</th>
+                                <th>Rollout Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="multi-line-comparison-tbody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Capital Allocation Decision Simulator -->
+            <div class="glass-card" style="margin-bottom:1.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                    <div>
+                        <h3 style="margin-bottom:0; color:#10B981;">💼 Executive Capital Allocation &amp; Scaling Scenarios</h3>
+                        <p class="subtitle" style="margin-bottom:0;">Interactive scenario analysis for digital twin expansion across plants</p>
+                    </div>
+                </div>
+                <div class="grid-3" style="margin-top:1rem;">
+                    <div style="padding:1rem; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #00E5FF;">
+                        <h4 style="color:#00E5FF; margin-bottom:0.25rem;">Phase 1: Pilot Line ($385)</h4>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">Instrument Fremont Line Alpha (11 uninstrumented nodes) with magnetic IoT vibration and current clamps.</p>
+                        <div style="font-size:0.75rem; font-weight:700; color:#10B981;">Net Savings: $26.4k/yr · Payback: 3.6 Days (~0.5 Wks)</div>
+                    </div>
+                    <div style="padding:1rem; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #FFAB40;">
+                        <h4 style="color:#FFAB40; margin-bottom:0.25rem;">Phase 2: Multi-Plant Rollout ($1,750)</h4>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">Deploy retrofits to Detroit Legacy Plant 2 (50 stations) + Austin Gigafactory line expansion.</p>
+                        <div style="font-size:0.75rem; font-weight:700; color:#10B981;">Net Savings: $120k/yr · Payback: 3.6 Days (~0.5 Wks)</div>
+                    </div>
+                    <div style="padding:1rem; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #10B981;">
+                        <h4 style="color:#10B981; margin-bottom:0.25rem;">Phase 3: Enterprise Fleet ($14,700)</h4>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">Full enterprise deployment across 12 assembly plants (420 stations) with centralized Site-Normalized THI Dashboard.</p>
+                        <div style="font-size:0.75rem; font-weight:700; color:#10B981;">Net Savings: $1.01M/yr · Payback: 3.6 Days (~0.5 Wks)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority 3: Disclosed Assumptions & Industry Benchmark Sources -->
+            <div class="glass-card" style="margin-bottom:1.5rem; border:1px dashed rgba(0,229,255,0.3); background:rgba(0,229,255,0.02); padding:0.9rem 1.2rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
+                    <span style="font-size:0.9rem;">📌</span>
+                    <h4 style="margin:0; font-size:0.85rem; color:#00E5FF; font-weight:700;">Financial Assumptions &amp; Industry Benchmark Disclosures</h4>
+                </div>
+                <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:0.4rem;">
+                    In accordance with transparent ROI evaluation standards, all financial projections utilize auditable, bottom-up linear aggregation:
+                </p>
+                <div class="grid-3" style="font-size:0.7rem; color:#ccc; gap:0.75rem;">
+                    <div>
+                        <strong style="color:#fff;">Hardware Pack ($35/node):</strong> Commercial off-the-shelf MEMS accelerometer ($8), split-core CT clamp ($15), optical switch ($12).
+                    </div>
+                    <div>
+                        <strong style="color:#fff;">Estimated Payback ($2.2k–$2.6k/yr):</strong> Avoided scrap rework ($900) + warranty liability ($1,100) + micro-downtime prevention ($400) (ASQ / Harbour Report).
+                        <div style="color:#10B981; margin-top:2px; font-weight:600;">Directional Payback: ~3–5 Days per node across 250 operating days.</div>
+                    </div>
+                    <div>
+                        <strong style="color:#fff;">Enterprise Projection:</strong> Linear scaling to 420 stations implies <strong>~$0.9M–$1.1M/yr</strong> before site-to-site logistical variance.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-ticker glass-card">
+        <div id="ticker-track" class="ticker-track">
+            <span>🔴 S12 Wear Alert </span> • 
+            <span>🟢 S4 Back online </span> • 
+            <span>🔵 Shift change in 20m </span> • 
+            <span>📈 OEE trending up </span>
+        </div>
+    </footer>
+
+    <!-- Mini-Map -->
+    <div id="mini-map" class="mini-map glass-card">
+        <svg class="mini-map-watermark" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- Original wireframe car silhouette, hand-drawn as a digital-twin motif -->
+            <path d="M18 66 L30 66 L38 50 L70 44 L112 44 L134 52 L168 56 L178 66 L182 66"
+                  fill="none" stroke="#00E5FF" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M38 50 L46 34 L98 34 L112 44" fill="none" stroke="#00E5FF" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="54" cy="66" r="9" fill="none" stroke="#29B6F6" stroke-width="1.1"/>
+            <circle cx="150" cy="66" r="9" fill="none" stroke="#29B6F6" stroke-width="1.1"/>
+            <path d="M60 40 L60 34 M76 40 L76 34 M92 40 L92 34" stroke="#00E5FF" stroke-width="0.7"/>
+        </svg>
+        <div class="mini-map-header">
+            <svg class="mini-map-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 17V7l8-4 8 4v10l-8 4-8-4z" stroke="#00E5FF" stroke-width="1.4" stroke-linejoin="round"/>
+                <path d="M4 7l8 4 8-4M12 11v10" stroke="#00E5FF" stroke-width="1.4" stroke-linejoin="round"/>
+            </svg>
+            <span>Line Overview</span>
+            <span class="mini-map-live" id="mini-map-live-indicator">● LIVE</span>
+        </div>
+        <canvas id="canvas-mini-map" width="150" height="100" title="Click a station to inspect it"></canvas>
+        <div class="mini-map-legend">
+            <span><i style="background:#ef4444;"></i>Bottleneck</span>
+            <span><i style="background:#ffab40;"></i>Predicted</span>
+            <span><i style="background:#10b981;"></i>Healthy</span>
+        </div>
+        <div class="mini-map-status-line">
+            <span>Healthy <strong id="mini-map-healthy-count">--</strong>/35</span>
+            <span id="mini-map-active-alert">--</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="simulationEngine.js"></script>
+    <script src="dataGapEngine.js"></script>
+    <script src="evidenceEngine.js"></script>
+    <script src="predictiveEngine.js"></script>
+    <script src="qualityThreadEngine.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
