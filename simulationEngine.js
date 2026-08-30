@@ -1712,7 +1712,6 @@ class SimulationEngine {
         if (this.manualMaintenanceWindowOverride) return true;
         const elapsedMinutes = (this.elapsedTimeSec / 60) % 480; // rolling 8hr shift
         if (this.shiftState && this.shiftState.changeoverActive) return true;
-        if (typeof window !== 'undefined' && window.isSimPaused) return true;
         return this.maintenanceWindows.some(w => elapsedMinutes >= w.startMin && elapsedMinutes <= w.endMin);
     }
 
@@ -1888,6 +1887,7 @@ class SimulationEngine {
             plant: this.config.plant,
             stationCount: total,
             thi: Math.round(thi * 10) / 10,
+            score: Math.round(thi * 10) / 10,
             healthTier: healthTier,
             components: {
                 throughputEfficiency: Math.round(throughputEfficiency * 10) / 10,

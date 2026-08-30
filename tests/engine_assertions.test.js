@@ -47,13 +47,43 @@ const s3Live = window.evidenceEngine.computePinnLive('S3', mockS3);
 const approveStatus = s3Live && parseFloat(s3Live.value) >= 180.0 && parseFloat(s3Live.value) <= 240.0;
 assert(approveStatus, 'Station S3 interface temperature evaluates within 180-240C spec');
 
-const dynamicThread = window.qualityThreadEngine.getVehicleThread('VIN-2026-8842', window.simEngine.vehicles, window.simEngine.completedVehicles);
-assert(dynamicThread && dynamicThread.isCuratedDemo === true, 'Curated demo baseline returns valid thread with curated badge');
+const curatedThread = window.qualityThreadEngine.getVehicleThread('VIN-2026-8842', window.simEngine.vehicles, window.simEngine.completedVehicles);
+assert(curatedThread && curatedThread.isCuratedDemo === true, 'Curated demo baseline returns valid thread with curated badge');
 
 const nonExistentThread = window.qualityThreadEngine.getVehicleThread('VIN-UNKNOWN-EDGE', window.simEngine.vehicles, window.simEngine.completedVehicles);
-assert(nonExistentThread && nonExistentThread.intermediateStations.length === 0, 'Non-existent VIN query safely returns clean default');
+assert(nonExistentThread && nonExistentThread.intermediateStations.length === 0, 'Non-existent VIN query safely returns clean default without throwing');
 
-const toggleAttempt = window.simEngine.toggleSensorInstrumentation('S6', false);
-assert(typeof toggleAttempt.success === 'boolean', 'Maintenance window safety gate returns structured approval object');
+// Stress Test 1: Sensor deployment measurably increases station confidence
+const stS6 = window.simEngine.getStation('S6') || window.simEngine.stations[5];
+stS6.signalConfidence.vibration = 0.42;
+const confValsBefore = Object.values(stS6.signalConfidence);
+stS6.confidence = confValsBefore.reduce((a, b) => a + b, 0) / confValsBefore.length;
+const beforeConf = stS6.confidence;
+window.dataGapEngine.deploySensor(stS6.id, 'Piezo Vibration Sensor');
+const afterConf = stS6.confidence;
+assert(afterConf > beforeConf, `Sensor deployment measurably increases station confidence (${beforeConf.toFixed(2)} -> ${afterConf.toFixed(2)})`);
+
+// Stress Test 2: Maintenance window OT safety gate strictly blocks deployment outside window
+window.simEngine.maintenanceWindowGateEnabled = true;
+window.simEngine.manualMaintenanceWindowOverride = false;
+if (window.simEngine.shiftState) window.simEngine.shiftState.changeoverActive = false;
+window.simEngine.elapsedTimeSec = 20 * 60; // 20 min is outside MW-1 (0-15m) and MW-2 (230-260m)
+const blockedAttempt = window.simEngine.toggleSensorInstrumentation('S6', false);
+assert(blockedAttempt && blockedAttempt.success === false, 'Deployment outside active maintenance window is strictly blocked by OT safety gate');
+
+// Stress Test 3: Real dynamic (non-curated) simulated VIN trace resolves with isCuratedDemo=false
+const allVehicles = (window.simEngine.vehicles || []).concat(window.simEngine.completedVehicles || []);
+const dynamicDefectVehicle = allVehicles.find(v => v.latentDefects && v.latentDefects.length > 0) || allVehicles[0];
+if (dynamicDefectVehicle) {
+    const dynThread = window.qualityThreadEngine.getVehicleThread(dynamicDefectVehicle.vin, window.simEngine.vehicles, window.simEngine.completedVehicles);
+    assert(dynThread && dynThread.isCuratedDemo === false, `Real dynamic simulated VIN (${dynamicDefectVehicle.vin}) resolves with isCuratedDemo=false`);
+}
+
+// Stress Test 4: Multi-line instancing normalization ranking
+if (window.lineInstances && window.lineInstances['line-legacy'] && window.lineInstances['line-modern']) {
+    const healthBeta = window.lineInstances['line-legacy'].getTwinHealthScore();
+    const healthGamma = window.lineInstances['line-modern'].getTwinHealthScore();
+    assert(healthGamma.score > healthBeta.score, `Modern line health index (${healthGamma.score}) strictly exceeds legacy line health index (${healthBeta.score})`);
+}
 
 console.log('\nRESULTS: ' + passCount + ' / ' + totalCount + ' ASSERTIONS PASSED (100% success)\n');

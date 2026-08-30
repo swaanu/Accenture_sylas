@@ -1,18 +1,53 @@
-import subprocess, time, json, urllib.request, os, socket, base64, struct, sys
+import platform, shutil, subprocess, time, json, urllib.request, os, socket, base64, struct, sys
 
-edge_path = r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
-user_data = request_dir = os.path.join(os.getcwd(), 'scratch', 'edge_temp_profile')
+def find_browser():
+    candidates = {
+        'Darwin': [
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+            '/Applications/Chromium.app/Contents/MacOS/Chromium',
+            '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
+        ],
+        'Linux': [
+            'google-chrome',
+            'google-chrome-stable',
+            'chromium-browser',
+            'chromium',
+            'microsoft-edge',
+            'microsoft-edge-stable',
+            'brave-browser'
+        ],
+        'Windows': [
+            r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+            r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+            r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+            r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+            r'C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe'
+        ]
+    }
+    system = platform.system()
+    for c in candidates.get(system, []):
+        path = shutil.which(c) or (c if os.path.exists(c) else None)
+        if path:
+            return path
+    raise RuntimeError("No supported browser found — run tests via tests/test_runner.html in your browser instead.")
+
+browser_path = find_browser()
+user_data = os.path.join(os.getcwd(), 'scratch', 'edge_temp_profile')
 os.makedirs(user_data, exist_ok=True)
 
+test_html_uri = f'file:///{os.path.join(os.getcwd(), "tests", "test_runner.html").replace("\\\\", "/")}'
+
 proc = subprocess.Popen([
-    edge_path,
+    browser_path,
     '--headless=new',
     '--remote-debugging-port=9222',
     f'--user-data-dir={user_data}',
     '--disable-gpu',
     '--no-first-run',
     '--no-default-browser-check',
-    f'file:///{os.path.join(os.getcwd(), "tests", "test_runner.html").replace("\\\\", "/")}'])
+    test_html_uri
+])
 
 time.sleep(2)
 
@@ -144,11 +179,61 @@ try:
             'Clean default fallback'
         );
 
-        const gateRes = window.simEngine.toggleSensorInstrumentation('S6', false);
+        // Stress Test 1: Sensor deployment measurably increases station confidence
+        const stS6 = window.simEngine.getStation('S6') || window.simEngine.stations[5];
+        stS6.signalConfidence.vibration = 0.42;
+        const confValsBefore = Object.values(stS6.signalConfidence);
+        stS6.confidence = confValsBefore.reduce((a, b) => a + b, 0) / confValsBefore.length;
+        const beforeConf = stS6.confidence;
+        window.dataGapEngine.deploySensor(stS6.id, 'Piezo Vibration Sensor');
+        const afterConf = stS6.confidence;
         check(
-            typeof gateRes.success === 'boolean',
-            'OT Safety Constraint: Maintenance window deployment check returns boolean approval',
-            `Gate approval: ${gateRes.success}`
+            afterConf > beforeConf,
+            'Sensor Retrofit: Deployment measurably increases station confidence',
+            `Confidence jump: ${beforeConf.toFixed(2)} -> ${afterConf.toFixed(2)}`
+        );
+
+        // Stress Test 2: Maintenance window OT safety gate strictly blocks deployment outside window
+        window.simEngine.maintenanceWindowGateEnabled = true;
+        window.simEngine.manualMaintenanceWindowOverride = false;
+        if (window.simEngine.shiftState) window.simEngine.shiftState.changeoverActive = false;
+        window.simEngine.elapsedTimeSec = 20 * 60; // 20 min is outside MW-1 (0-15m) and MW-2 (230-260m)
+        const blockedAttempt = window.simEngine.toggleSensorInstrumentation('S6', false);
+        check(
+            blockedAttempt && blockedAttempt.success === false,
+            'OT Safety Constraint: Deployment outside active maintenance window is strictly blocked',
+            'Gate blocked capex modification outside MW schedule'
+        );
+
+        // Stress Test 3: Real dynamic (non-curated) simulated VIN trace resolves with isCuratedDemo=false
+        const allVehicles = (window.simEngine.vehicles || []).concat(window.simEngine.completedVehicles || []);
+        const dynamicDefectVehicle = allVehicles.find(v => v.latentDefects && v.latentDefects.length > 0) || allVehicles[0];
+        let dynamicTracePassed = false;
+        let dynamicVinName = 'N/A';
+        if (dynamicDefectVehicle) {
+            dynamicVinName = dynamicDefectVehicle.vin;
+            const dynThread = window.qualityThreadEngine.getVehicleThread(dynamicDefectVehicle.vin, window.simEngine.vehicles, window.simEngine.completedVehicles);
+            dynamicTracePassed = (dynThread && dynThread.isCuratedDemo === false);
+        }
+        check(
+            dynamicTracePassed,
+            'Quality Thread: Real dynamic simulated VIN resolves dynamically',
+            `Dynamic VIN: ${dynamicVinName} (isCuratedDemo=false)`
+        );
+
+        // Stress Test 4: Multi-line instancing normalization ranking
+        let multiLinePassed = false;
+        let scoreDetail = '';
+        if (window.lineInstances && window.lineInstances['line-legacy'] && window.lineInstances['line-modern']) {
+            const healthBeta = window.lineInstances['line-legacy'].getTwinHealthScore();
+            const healthGamma = window.lineInstances['line-modern'].getTwinHealthScore();
+            multiLinePassed = (healthGamma.score > healthBeta.score);
+            scoreDetail = `Modern (${healthGamma.score}) > Legacy (${healthBeta.score})`;
+        }
+        check(
+            multiLinePassed,
+            'Multi-Line Instancing: Normalized health index scales across plant configurations',
+            scoreDetail
         );
 
         return {

@@ -114,18 +114,68 @@
                 'VIN-2026-8842 flagged as curated demo'
             );
 
-            const edgeThread = window.qualityThreadEngine.getVehicleThread('VIN-NONEXISTENT', window.simEngine.vehicles, window.simEngine.completedVehicles);
+            const edgeThread = window.qualityThreadEngine.getVehicleThread('VIN-UNKNOWN-EDGE', window.simEngine.vehicles, window.simEngine.completedVehicles);
             check(
                 edgeThread && edgeThread.intermediateStations.length === 0,
                 'QualityThread_EdgeSafe',
-                'Nonexistent VIN query safely handled'
+                'Nonexistent VIN query safely handled without throwing'
             );
 
-            const gateRes = window.simEngine.toggleSensorInstrumentation('S6', false);
+            // Stress Test 1: Sensor deployment measurably increases station confidence
+            const stS6 = window.simEngine.getStation('S6') || window.simEngine.stations[5];
+            stS6.signalConfidence.vibration = 0.42;
+            const confValsBefore = Object.values(stS6.signalConfidence);
+            stS6.confidence = confValsBefore.reduce((a, b) => a + b, 0) / confValsBefore.length;
+            const beforeConf = stS6.confidence;
+            window.dataGapEngine.deploySensor(stS6.id, 'Piezo Vibration Sensor');
+            const afterConf = stS6.confidence;
             check(
-                typeof gateRes.success === 'boolean',
-                'MaintenanceWindow_GateEnforced',
-                `Gate success: ${gateRes.success}`
+                afterConf > beforeConf,
+                'SensorRetrofit_ConfidenceBoost',
+                `Confidence jump: ${beforeConf.toFixed(2)} -> ${afterConf.toFixed(2)}`
+            );
+
+            // Stress Test 2: Maintenance window OT safety gate strictly blocks deployment outside window
+            window.simEngine.maintenanceWindowGateEnabled = true;
+            window.simEngine.manualMaintenanceWindowOverride = false;
+            if (window.simEngine.shiftState) window.simEngine.shiftState.changeoverActive = false;
+            window.simEngine.elapsedTimeSec = 20 * 60; // 20 min is outside MW-1 (0-15m) and MW-2 (230-260m)
+            const blockedAttempt = window.simEngine.toggleSensorInstrumentation('S6', false);
+            check(
+                blockedAttempt && blockedAttempt.success === false,
+                'MaintenanceWindow_HardGateBlocked',
+                'Gate blocked capex modification outside MW schedule'
+            );
+
+            // Stress Test 3: Real dynamic (non-curated) simulated VIN trace resolves with isCuratedDemo=false
+            const allVehicles = (window.simEngine.vehicles || []).concat(window.simEngine.completedVehicles || []);
+            const dynamicDefectVehicle = allVehicles.find(v => v.latentDefects && v.latentDefects.length > 0) || allVehicles[0];
+            let dynamicTracePassed = false;
+            let dynamicVinName = 'N/A';
+            if (dynamicDefectVehicle) {
+                dynamicVinName = dynamicDefectVehicle.vin;
+                const dynThread = window.qualityThreadEngine.getVehicleThread(dynamicDefectVehicle.vin, window.simEngine.vehicles, window.simEngine.completedVehicles);
+                dynamicTracePassed = (dynThread && dynThread.isCuratedDemo === false);
+            }
+            check(
+                dynamicTracePassed,
+                'QualityThread_DynamicVinResolution',
+                `Dynamic VIN: ${dynamicVinName} (isCuratedDemo=false)`
+            );
+
+            // Stress Test 4: Multi-line instancing normalization ranking
+            let multiLinePassed = false;
+            let scoreDetail = '';
+            if (window.lineInstances && window.lineInstances['line-legacy'] && window.lineInstances['line-modern']) {
+                const healthBeta = window.lineInstances['line-legacy'].getTwinHealthScore();
+                const healthGamma = window.lineInstances['line-modern'].getTwinHealthScore();
+                multiLinePassed = (healthGamma.score > healthBeta.score);
+                scoreDetail = `Modern (${healthGamma.score}) > Legacy (${healthBeta.score})`;
+            }
+            check(
+                multiLinePassed,
+                'MultiLine_NormalizedComparison',
+                scoreDetail
             );
 
             const container = document.getElementById('test-container');
