@@ -4281,7 +4281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const w = canvas.width = canvas.clientWidth;
-    const h = canvas.height = 180;
+    const h = canvas.height = canvas.clientHeight || 190;
     ctx.clearRect(0, 0, w, h);
 
     const metrics = sim.getSummaryMetrics();
@@ -4432,7 +4432,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const w = canvas.width = canvas.clientWidth;
-    const h = canvas.height = 180;
+    const h = canvas.height = canvas.clientHeight || 190;
     ctx.clearRect(0, 0, w, h);
 
     const stations = sim.stations;
@@ -4563,7 +4563,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const w = canvas.width = canvas.clientWidth;
-    const h = canvas.height = 320;
+    const h = canvas.height = canvas.clientHeight || 190;
     ctx.clearRect(0, 0, w, h);
 
     const stations = sim.stations;

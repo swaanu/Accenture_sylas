@@ -175,25 +175,48 @@
                 <div id="stations-strip" class="stations-strip"></div>
             </div>
 
-            <!-- Station Dependency Network — Causal Influence Topology (Moved Above) -->
-            <div class="glass-card dependency-network-card" style="margin-bottom:1.5rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                    <div style="display:flex; align-items:center; gap:0.6rem;">
-                        <h3 style="margin-bottom:0;">🕸️ Station Dependency Network — Causal Influence Topology</h3>
-                        <span class="badge-tag live-badge" style="font-size:0.65rem;">● INTERLINKED CAUSAL FLOW</span>
+            <!-- Unified Operational Topology & Stability Suite (Horizontally Aligned) -->
+            <div class="topology-composite-grid">
+                <!-- 1. Station Dependency Network -->
+                <div class="glass-card topology-card dependency-network-card" style="display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                        <div style="display:flex; align-items:center; gap:0.4rem;">
+                            <h3 style="margin-bottom:0; font-size:0.82rem; white-space:nowrap;">🕸️ Causal Dependency Topology</h3>
+                            <span class="badge-tag live-badge" style="font-size:0.55rem; padding:1px 4px;">● CAUSAL</span>
+                        </div>
+                        <div class="btn-group-sm" style="display:flex; gap:0.2rem;">
+                            <button class="mode-btn active" id="btn-dep-force" style="padding:1px 5px; font-size:0.6rem;">Force</button>
+                            <button class="mode-btn" id="btn-dep-arc" style="padding:1px 5px; font-size:0.6rem;">Arc</button>
+                        </div>
                     </div>
-                    <div class="btn-group-sm" style="display:flex; gap:0.3rem;">
-                        <button class="mode-btn active" id="btn-dep-force">Force-Directed</button>
-                        <button class="mode-btn" id="btn-dep-arc">Arc Diagram</button>
+                    <canvas id="canvas-dependency-network" height="190" style="flex:1; width:100%; border-radius:6px; cursor:grab;"></canvas>
+                    <div id="dep-network-legend" style="display:flex; flex-wrap:wrap; gap:0.25rem 0.5rem; justify-content:space-between; align-items:center; margin-top:0.3rem; font-size:0.6rem; color:var(--text-muted);">
+                        <span><i style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#EF4444; margin-right:2px;"></i>Bottleneck</span>
+                        <span><i style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#F59E0B; margin-right:2px;"></i>Blocked</span>
+                        <span><i style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#8B5CF6; margin-right:2px;"></i>Starved</span>
+                        <span><i style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#FFAB40; margin-right:2px;"></i>Predicted</span>
+                        <span><i style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#00E5FF; margin-right:2px;"></i>Healthy</span>
                     </div>
                 </div>
-                <canvas id="canvas-dependency-network" height="280"></canvas>
-                <div id="dep-network-legend" style="display:flex; gap:1.2rem; justify-content:center; align-items:center; margin-top:0.4rem; font-size:0.7rem; color:var(--text-muted);">
-                    <span><i style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#EF4444; margin-right:4px;"></i>Active Bottleneck</span>
-                    <span><i style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#F59E0B; margin-right:4px;"></i>Upstream Blocked (Backpressure)</span>
-                    <span><i style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#8B5CF6; margin-right:4px;"></i>Downstream Starved (Starvation)</span>
-                    <span><i style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#FFAB40; margin-right:4px;"></i>Predicted Bottleneck</span>
-                    <span><i style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#00E5FF; margin-right:4px;"></i>Healthy / Flowing</span>
+
+                <!-- 2. Throughput Waveform Analyzer -->
+                <div class="glass-card topology-card" style="display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                        <h3 style="margin-bottom:0; font-size:0.82rem; white-space:nowrap;">📊 Throughput Waveform</h3>
+                        <span class="badge-tag live-badge" style="font-size:0.55rem; padding:1px 4px;">● 42 JPH</span>
+                    </div>
+                    <canvas id="canvas-throughput-wave" height="190" style="flex:1; width:100%; border-radius:6px;"></canvas>
+                    <div id="throughput-wave-stats" style="display:flex; flex-wrap:wrap; gap:0.2rem 0.4rem; justify-content:space-between; margin-top:0.3rem; font-size:0.6rem;"></div>
+                </div>
+
+                <!-- 3. System Entropy & Stability Index -->
+                <div class="glass-card topology-card" style="display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                        <h3 style="margin-bottom:0; font-size:0.82rem; white-space:nowrap;">🌡️ System Entropy</h3>
+                        <span class="badge-tag live-badge" style="font-size:0.55rem; padding:1px 4px;">● STABILITY</span>
+                    </div>
+                    <canvas id="canvas-entropy-gauge" height="190" style="flex:1; width:100%; border-radius:6px;"></canvas>
+                    <div id="entropy-stats" style="display:flex; flex-wrap:wrap; gap:0.2rem 0.4rem; justify-content:space-between; margin-top:0.3rem; font-size:0.6rem;"></div>
                 </div>
             </div>
 
@@ -328,19 +351,6 @@
                 <div id="entangled-legend" style="display:flex; gap:1rem; margin-top:0.5rem; font-size:0.7rem; color:var(--text-muted); justify-content:center;"></div>
             </div>
 
-            <div class="grid-2" style="margin-top:1rem;">
-                <!-- Throughput Waveform Analyzer -->
-                <div class="glass-card">
-                    <h3>📊 Throughput Waveform — Phase Coherence Analysis</h3>
-                    <canvas id="canvas-throughput-wave" height="180"></canvas>
-                    <div id="throughput-wave-stats" style="display:flex; gap:1rem; margin-top:0.5rem; font-size:0.7rem;"></div>
-                </div>
-                <!-- System Entropy Gauge -->
-                <div class="glass-card">
-                    <h3>🌡️ System Entropy & Stability Index</h3>
-                    <canvas id="canvas-entropy-gauge" height="180"></canvas>
-                    <div id="entropy-stats" style="display:flex; gap:1rem; margin-top:0.5rem; font-size:0.7rem;"></div>
-                </div>
             </div>
         </section>
 
