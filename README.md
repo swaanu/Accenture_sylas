@@ -76,20 +76,23 @@ In accordance with transparent engineering evaluation, all assumptions and param
 ## 🚀 Quickstart & Verification
 
 1. **Start the local HTTP server**:
-   `ash
+   ```bash
    python server.py
-   `
+   ```
 2. **Access the application**:
-   Open http://localhost:8080 in any modern web browser.
-3. **Run Verification Assertions**:
-   `ash
-   node tests/engine_assertions.test.js
-   `
+   Open `http://localhost:8080` in any modern web browser.
+3. **Run Automated Test Assertions**:
+   * **CLI Runner**:
+     ```bash
+     python test_runner.py
+     ```
+   * **Interactive In-Browser Runner**:
+     Open `http://localhost:8080/tests/test_runner.html`
 4. **Keyboard Shortcuts**:
-   * 1 — Floor Supervisor (Real-time)
-   * 2 — Plant Manager (Weekly Trends)
-   * 3 — Leadership (Rollout & ROI)
-   * 4 — Modelling & Physics
-   * 5 — Predictive Techniques
-   * Space — Play / Pause Simulation
-   * S — Step Single Frame Forward
+   * `1` — Floor Supervisor (Real-time)
+   * `2` — Plant Manager (Weekly Trends)
+   * `3` — Leadership (Rollout & ROI)
+   * `4` — Modelling & Physics
+   * `5` — Predictive Techniques
+   * `Space` — Play / Pause Simulation
+   * `S` — Step Single Frame Forward
