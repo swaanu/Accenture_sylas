@@ -4178,8 +4178,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const y = cy + Math.sin(angle) * radius;
 
       const isSelected = st.id === selectedStationId;
-      const nodeRadius = st.isBottleneck ? 8 : st.isPredictedBottleneck ? 7 : isSelected ? 7 : 5;
-      const color = st.isBottleneck ? '#EF4444' : st.isPredictedBottleneck ? '#FFAB40' : st.zone === 'Body' ? '#00E5FF' : st.zone === 'Paint' ? '#29B6F6' : '#10B981';
+      const nodeRadius = st.isBottleneck ? 8 : st.isPredictedBottleneck ? 7 : (st.isBlocked || st.isStarved) ? 6 : isSelected ? 7 : 5;
+      let color = st.isBottleneck ? '#EF4444' : st.isPredictedBottleneck ? '#FFAB40' : st.isBlocked ? '#F59E0B' : st.isStarved ? '#8B5CF6' : st.zone === 'Body' ? '#00E5FF' : st.zone === 'Paint' ? '#29B6F6' : '#10B981';
 
       entangledNodePositions.push({ id: st.id, x, y, r: nodeRadius + 6 });
 
@@ -4196,15 +4196,16 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.setLineDash([]);
       }
 
-      // Glow for active bottlenecks
-      if (st.isBottleneck || st.isPredictedBottleneck) {
+      // Glow for active bottlenecks, blocked, and starved nodes
+      if (st.isBottleneck || st.isPredictedBottleneck || st.isBlocked || st.isStarved) {
         const pulse = 0.5 + 0.5 * Math.sin(time * 3 + i);
-        const glow = ctx.createRadialGradient(x, y, 0, x, y, nodeRadius + 12 + pulse * 6);
+        const glowR = (st.isBottleneck || st.isPredictedBottleneck) ? nodeRadius + 12 + pulse * 6 : nodeRadius + 8 + pulse * 3;
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, glowR);
         glow.addColorStop(0, color + '80');
         glow.addColorStop(1, color + '00');
         ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(x, y, nodeRadius + 12 + pulse * 6, 0, Math.PI * 2);
+        ctx.arc(x, y, glowR, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -4276,6 +4277,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   let throughputWaveHistory = [];
   let throughputBottleneckEvents = []; // tracks which data points had active bottlenecks
+  let throughputWaveLastTick = -1; // throttle: only push data once per sim tick
   function drawThroughputWave() {
     const canvas = document.getElementById('canvas-throughput-wave');
     if (!canvas) return;
@@ -4284,10 +4286,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const h = canvas.height = 185;
     ctx.clearRect(0, 0, w, h);
 
+    // Only push new data once per sim tick, not every animation frame
     const metrics = sim.getSummaryMetrics();
-    throughputWaveHistory.push(metrics.throughputRate || 0);
-    throughputBottleneckEvents.push(metrics.activeBottleneck || null);
-    if (throughputWaveHistory.length > 200) { throughputWaveHistory.shift(); throughputBottleneckEvents.shift(); }
+    const currentTick = sim.tickCount || 0;
+    if (currentTick !== throughputWaveLastTick) {
+      throughputWaveLastTick = currentTick;
+      throughputWaveHistory.push(metrics.throughputRate || 0);
+      throughputBottleneckEvents.push(metrics.activeBottleneck || null);
+      if (throughputWaveHistory.length > 200) { throughputWaveHistory.shift(); throughputBottleneckEvents.shift(); }
+    }
 
     const data = throughputWaveHistory;
     if (data.length < 3) return;
@@ -4427,6 +4434,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 27. SYSTEM ENTROPY & STABILITY INDEX
   // ==========================================
   let entropyHistory = [];
+  let entropyLastTick = -1; // throttle: only push data once per sim tick
   function drawEntropyGauge() {
     const canvas = document.getElementById('canvas-entropy-gauge');
     if (!canvas) return;
@@ -4441,8 +4449,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Calculate system entropy: higher when more stations are in abnormal states
     const abnormalCount = stations.filter(s => s.isBottleneck || s.isPredictedBottleneck || s.isBlocked || s.isStarved || s.anomalyFlags.length > 0).length;
     const entropy = (abnormalCount / stations.length) * 100;
-    entropyHistory.push(entropy);
-    if (entropyHistory.length > 150) entropyHistory.shift();
+
+    // Only push new data once per sim tick, not every animation frame
+    const currentTick = sim.tickCount || 0;
+    if (currentTick !== entropyLastTick) {
+      entropyLastTick = currentTick;
+      entropyHistory.push(entropy);
+      if (entropyHistory.length > 150) entropyHistory.shift();
+    }
 
     // Left half: Gauge arc
     const gaugeX = Math.min(w * 0.28, 80);
