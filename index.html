@@ -202,11 +202,17 @@
                     </div>
                 </div>
 
-                <!-- 2. Throughput Waveform Analyzer -->
+                <!-- 2. Throughput Waveform Analyzer & Phase Orbit -->
                 <div class="glass-card topology-card">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-                        <h3 style="margin-bottom:0; font-size:0.82rem; white-space:nowrap;">📊 Throughput Waveform</h3>
-                        <span class="badge-tag live-badge" style="font-size:0.55rem; padding:1px 4px;">● 42 JPH</span>
+                        <div style="display:flex; align-items:center; gap:0.3rem;">
+                            <h3 style="margin-bottom:0; font-size:0.82rem; white-space:nowrap;" id="tp-card-title">📊 Throughput Waveform</h3>
+                            <span class="badge-tag live-badge" style="font-size:0.55rem; padding:1px 4px;">● 42 JPH</span>
+                        </div>
+                        <div class="btn-group-sm" style="display:flex; gap:0.2rem;">
+                            <button class="mode-btn active" id="btn-tp-wave" style="padding:1px 5px; font-size:0.6rem;">Wave</button>
+                            <button class="mode-btn" id="btn-tp-orbit" style="padding:1px 5px; font-size:0.6rem;">Orbit 🌀</button>
+                        </div>
                     </div>
                     <canvas id="canvas-throughput-wave" width="400" height="185" style="width:100%; height:185px; display:block; border-radius:6px;"></canvas>
                     <div id="throughput-wave-stats" style="display:flex; flex-wrap:wrap; gap:0.2rem 0.4rem; justify-content:space-between; margin-top:0.35rem; font-size:0.6rem;"></div>
@@ -231,10 +237,11 @@
                         <span id="selected-station-equipment" class="badge-tag">Robotic Welder</span>
                     </div>
                     
-                    <div class="telemetry-tab-bar" style="display:flex; gap:0.3rem; margin-bottom:0.5rem;">
+                    <div class="telemetry-tab-bar" style="display:flex; gap:0.3rem; margin-bottom:0.5rem; flex-wrap:wrap;">
                         <button class="tel-tab-btn active" id="tab-tel-osc">📈 Oscilloscope</button>
                         <button class="tel-tab-btn" id="tab-tel-spc">📊 SPC Limits (Cpk)</button>
                         <button class="tel-tab-btn" id="tab-tel-fft">⚡ Harmonic Spectrum</button>
+                        <button class="tel-tab-btn" id="tab-tel-radar">🎯 6-Axis Radar</button>
                     </div>
 
                     <canvas id="canvas-telemetry" height="120"></canvas>
@@ -352,6 +359,23 @@
                 </div>
                 <canvas id="canvas-entangled-state" height="280"></canvas>
                 <div id="entangled-legend" style="display:flex; gap:1rem; margin-top:0.5rem; font-size:0.7rem; color:var(--text-muted); justify-content:center;"></div>
+            </div>
+
+            <!-- Entangled Hydrodynamic Buffer Waterfall -->
+            <div class="glass-card waterfall-card" style="margin-top:1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                    <div style="display:flex; align-items:center; gap:0.4rem;">
+                        <h3 style="margin-bottom:0; font-size:0.85rem;">🌊 Entangled Hydrodynamic Buffer Waterfall &amp; Soliton Backpressure</h3>
+                        <span class="badge-tag live-badge" style="font-size:0.55rem; padding:1px 4px;">● FLUID RIPPLE WAVE</span>
+                    </div>
+                    <span style="font-size:0.65rem; color:var(--cyan); font-family:var(--font-mono);" id="waterfall-metrics-label">35 Buffers Synced · Soliton Propagation Active</span>
+                </div>
+                <canvas id="canvas-buffer-waterfall" height="130" style="width:100%; height:130px; display:block; border-radius:6px; cursor:pointer;"></canvas>
+                <div id="waterfall-legend" style="display:flex; justify-content:space-between; margin-top:0.35rem; font-size:0.62rem; color:var(--text-muted);">
+                    <span>◀ Upstream Backpressure Soliton Wave (<strong style="color:#F59E0B;">#F59E0B</strong>)</span>
+                    <span style="color:#00E5FF;">Station Buffers S1 ──► S35 (Click column to inspect)</span>
+                    <span>Downstream Starvation Trough (<strong style="color:#8B5CF6;">#8B5CF6</strong>) ▶</span>
+                </div>
             </div>
 
             </div>

@@ -232,11 +232,13 @@ $$\mathbf{F}_i = \sum_{j \neq i} \frac{k_{\text{rep}}}{\|\mathbf{r}_i - \mathbf{
 Radiating dashed causal links animate from active bottlenecks (red `#EF4444`) to blocked upstream (amber `#F59E0B`) and starved downstream (purple `#8B5CF6`) nodes.
 
 #### 3.3.2 Unified Telemetry Suite
-* **Throughput Waveform Analyzer** (`#canvas-throughput-wave`): Tracks live JPH against the 42 JPH plant target, smoothed with a 10-period moving average filter (throttled to simulation ticks).
+* **Throughput Waveform & Phase-Space Orbit** (`#canvas-throughput-wave`): Toggles between continuous JPH time-series tracking (with 10-period MA) and a 2D **Phase-Space Limit Cycle Attractor** $(\Delta\text{JPH}, \frac{d\text{JPH}}{dt})$ rendering orbital persistence trails and Poincaré stability recurrence points.
 * **System Entropy & Stability Index** (`#canvas-entropy-gauge`): Dynamic Shannon disorder metric:
   $$H_{\text{system}} = \frac{1}{N} \sum_{i=1}^N \mathbb{I}\left(\text{State}(S_i) \in \{\text{Bottleneck}, \text{Blocked}, \text{Starved}, \text{Anomaly}\}\right) \times 100\% \tag{10}$$
+* **6-Axis Multi-Causal Telemetry Radar** (`#canvas-telemetry`): Multi-dimensional spiderweb polygon plotting Thermal Flux ($\Delta T$), Fastener Torque ($\tau$), Weld Nugget Integrity ($d_n$), Vibration Energy ($v_{\text{rms}}$), Buffer Load ($WIP$), and Topological Trust ($\mathcal{I}(S_i)$).
 * **Entangled Coupling Matrix** (`#canvas-entangled-state`): Quadratic Bezier circular chord web rendering harmonic inter-station dependencies.
-* **Six-Way Synchronization**: Selection across Conveyor Strip, Mini-Map, Causal Topology, Entangled Matrix, or Quality Thread updates the Station Inspector and selection rings across all views simultaneously.
+* **Hydrodynamic Buffer Waterfall & Soliton Waves** (`#canvas-buffer-waterfall`): Renders 35 dynamic fluid buffer columns with traveling soliton backpressure wave pulses (`#F59E0B`) moving upstream and starvation drainage troughs (`#8B5CF6`) moving downstream.
+* **Six-Way Synchronization**: Selection across Conveyor Strip, Mini-Map, Causal Topology, Entangled Matrix, Hydrodynamic Waterfall, or Quality Thread updates the Station Inspector, Multicausal Decomposition, and Selection Rings across all views simultaneously.
 
 #### 3.3.3 Rendering Performance Notes
 Canvas layers are redrawn independently rather than as a monolithic scene graph. The Velocity-Verlet integrator runs at a fixed timestep decoupled from the browser paint cycle, preserving 60 FPS performance without UI framework overhead.

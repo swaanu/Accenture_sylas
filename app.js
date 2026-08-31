@@ -206,8 +206,13 @@ document.addEventListener('DOMContentLoaded', () => {
     updateShiftDisplay();
     updateEnvironmentDisplay();
     drawEntangledState();
-    drawThroughputWave();
+    if (currentThroughputMode === 'orbit') {
+      drawPhaseSpaceOrbit();
+    } else {
+      drawThroughputWave();
+    }
     drawEntropyGauge();
+    drawBufferWaterfall();
     drawDependencyNetwork();
     drawInterventionGauges();
     drawInterventionImpact();
@@ -1022,6 +1027,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // 13. Telemetry Oscilloscope
   // ==========================================
   function drawTelemetryOscilloscope() {
+    if (currentTelemetryTab === 'radar') {
+      drawTelemetryRadar();
+      return;
+    }
     const canvas = document.getElementById('canvas-telemetry');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -1121,6 +1130,39 @@ document.addEventListener('DOMContentLoaded', () => {
   let accumulativeFinancialLoss = 0;
 
   function initViewModeSwitchers() {
+
+    // Throughput Wave vs Phase Orbit Toggle
+    const btnTpWave = document.getElementById('btn-tp-wave');
+    const btnTpOrbit = document.getElementById('btn-tp-orbit');
+    const tpCardTitle = document.getElementById('tp-card-title');
+    if (btnTpWave && btnTpOrbit) {
+      btnTpWave.addEventListener('click', () => {
+        currentThroughputMode = 'wave';
+        btnTpWave.classList.add('active');
+        btnTpOrbit.classList.remove('active');
+        if (tpCardTitle) tpCardTitle.textContent = '📊 Throughput Waveform';
+      });
+      btnTpOrbit.addEventListener('click', () => {
+        currentThroughputMode = 'orbit';
+        btnTpOrbit.classList.add('active');
+        btnTpWave.classList.remove('active');
+        if (tpCardTitle) tpCardTitle.textContent = '🌀 Phase-Space Attractor';
+      });
+    }
+
+    // 6-Axis Radar Telemetry Tab
+    const tabRadar = document.getElementById('tab-tel-radar');
+    if (tabRadar) {
+      tabRadar.addEventListener('click', () => {
+        currentTelemetryTab = 'radar';
+        document.querySelectorAll('.tel-tab-btn').forEach(b => b.classList.remove('active'));
+        tabRadar.classList.add('active');
+        drawTelemetryOscilloscope();
+      });
+    }
+
+    initWaterfallInteractivity();
+
     const btn2d = document.getElementById('btn-mode-2d');
     const btn3d = document.getElementById('btn-mode-3d');
     const btnEnergy = document.getElementById('btn-mode-energy');
@@ -4292,6 +4334,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   // 26. THROUGHPUT WAVEFORM - Phase Coherence Analysis
   // ==========================================
+  // Advanced Entangled Graphics State
+  let currentThroughputMode = 'wave'; // 'wave' | 'orbit'
+  let phaseOrbitPoints = [];
+  let bufferWaterfallLastTick = -1;
+  let waterfallStationHoverId = null;
+
   let throughputWaveHistory = [];
   let throughputBottleneckEvents = []; // tracks which data points had active bottlenecks
   let throughputWaveLastTick = -1; // throttle: only push data once per sim tick
@@ -4452,6 +4500,373 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   let entropyHistory = [];
   let entropyLastTick = -1; // throttle: only push data once per sim tick
+
+  // ==========================================
+  // 26b. PHASE-SPACE LIMIT CYCLE ATTRACTOR (Poincaré Orbit)
+  // ==========================================
+  function drawPhaseSpaceOrbit() {
+    const canvas = document.getElementById('canvas-throughput-wave');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.clientWidth || 360;
+    const h = canvas.height = 185;
+    ctx.clearRect(0, 0, w, h);
+
+    const metrics = sim.getSummaryMetrics();
+    const jph = metrics.throughputRate || 42;
+    const targetJPH = 42.0;
+    const deltaJPH = jph - targetJPH;
+
+    // Numerical derivative
+    const lastPoint = phaseOrbitPoints[phaseOrbitPoints.length - 1];
+    const dJPH = lastPoint ? (jph - lastPoint.rawJph) / 0.1 : 0;
+
+    phaseOrbitPoints.push({
+      x: deltaJPH,
+      y: dJPH,
+      rawJph: jph,
+      isBtnk: !!metrics.activeBottleneck,
+      tick: sim.tickCount
+    });
+    if (phaseOrbitPoints.length > 120) phaseOrbitPoints.shift();
+
+    const time = performance.now() / 1000;
+    const cx = w / 2;
+    const cy = h / 2;
+    const scaleX = w / 24; // scale for Delta JPH (-12 to +12)
+    const scaleY = h / 16; // scale for dJPH/dt (-8 to +8)
+
+    // Dark Radar Grid Background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fillRect(0, 0, w, h);
+
+    // Coordinate Axes
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, cy); ctx.lineTo(w, cy);
+    ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
+    ctx.stroke();
+
+    // Nominal Limit Cycle Target Ring
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 3 * scaleX, 1.8 * scaleY, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.4)';
+    ctx.font = '600 7px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText('NOMINAL LIMIT CYCLE', cx, cy - 2.2 * scaleY);
+
+    // Orbit Trajectory Ribbon
+    if (phaseOrbitPoints.length > 2) {
+      for (let i = 1; i < phaseOrbitPoints.length; i++) {
+        const p0 = phaseOrbitPoints[i - 1];
+        const p1 = phaseOrbitPoints[i];
+        const px0 = cx + p0.x * scaleX;
+        const py0 = cy - p0.y * scaleY;
+        const px1 = cx + p1.x * scaleX;
+        const py1 = cy - p1.y * scaleY;
+
+        const alpha = (i / phaseOrbitPoints.length);
+        const isSevere = p1.isBtnk || Math.abs(p1.x) > 6;
+        const col = isSevere ? `rgba(239, 68, 68, ${alpha * 0.9})` : Math.abs(p1.x) > 3 ? `rgba(255, 171, 64, ${alpha * 0.8})` : `rgba(0, 229, 255, ${alpha * 0.75})`;
+
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1 + alpha * 2;
+        ctx.beginPath();
+        ctx.moveTo(px0, py0);
+        ctx.lineTo(px1, py1);
+        ctx.stroke();
+      }
+
+      // Current State Head Particle
+      const head = phaseOrbitPoints[phaseOrbitPoints.length - 1];
+      const hx = cx + head.x * scaleX;
+      const hy = cy - head.y * scaleY;
+      const headColor = head.isBtnk ? '#EF4444' : Math.abs(head.x) > 3 ? '#FFAB40' : '#00E5FF';
+
+      ctx.fillStyle = headColor;
+      ctx.shadowColor = headColor;
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(hx, hy, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Orbit Vector
+      ctx.strokeStyle = headColor;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+    }
+
+    // Stats Bar
+    const statsEl = document.getElementById('throughput-wave-stats');
+    if (statsEl) {
+      const stability = Math.abs(deltaJPH) < 2.5 ? 'SYNCHRONIZED' : Math.abs(deltaJPH) < 6 ? 'ORBIT DRIFT' : 'CHAOTIC DIVERGENCE';
+      const stabColor = stability === 'SYNCHRONIZED' ? '#10B981' : stability === 'ORBIT DRIFT' ? '#FFAB40' : '#EF4444';
+      statsEl.innerHTML = `
+        <span style="color:#00E5FF;">ΔJPH: <strong>${deltaJPH >= 0 ? '+' : ''}${deltaJPH.toFixed(2)}</strong></span>
+        <span style="color:#FFAB40;">dJPH/dt: <strong>${dJPH.toFixed(2)}/s</strong></span>
+        <span style="color:${stabColor};">Attractor: <strong>${stability}</strong></span>
+        <span style="color:#4FC3F7;">Orbit Memory: <strong>${phaseOrbitPoints.length} ticks</strong></span>
+      `;
+    }
+  }
+
+  // ==========================================
+  // 26c. 6-AXIS MULTI-CAUSAL TELEMETRY RADAR
+  // ==========================================
+  function drawTelemetryRadar() {
+    const canvas = document.getElementById('canvas-telemetry');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.clientWidth || 360;
+    const h = canvas.height = 120;
+    ctx.clearRect(0, 0, w, h);
+
+    const st = sim.stations.find(s => s.id === selectedStationId);
+    if (!st) return;
+
+    const cx = w / 2;
+    const cy = h / 2 + 4;
+    const radius = Math.min(cx, cy) - 18;
+    const numAxes = 6;
+    const time = performance.now() / 1000;
+
+    // Compute normalized values [0.1..1.0] for the 6 axes
+    const thermalRatio = Math.min(1.0, Math.max(0.1, (st.measurements.temperature || 22) / 220));
+    const torqueRatio = Math.min(1.0, Math.max(0.1, (st.measurements.torque || 100) / 160));
+    const weldRatio = Math.min(1.0, Math.max(0.1, (st.weldNuggetDiameter || 5.08) / 6.5));
+    const vibRatio = Math.min(1.0, Math.max(0.1, (st.measurements.vibration || 0.08) / 0.25));
+    const bufferRatio = Math.min(1.0, Math.max(0.1, st.wipCount / (st.maxBuffer || 4)));
+    const trustRatio = Math.min(1.0, Math.max(0.1, st.confidence || 0.8));
+
+    const values = [thermalRatio, torqueRatio, weldRatio, vibRatio, bufferRatio, trustRatio];
+    const axisLabels = ['Thermal Flux', 'Torque Preload', 'Weld Nugget', 'Vib RMS', 'Buffer WIP', 'Inference Trust'];
+
+    // Draw Polygon Rings
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.lineWidth = 1;
+    for (let r = 1; r <= 3; r++) {
+      const ringRad = (radius / 3) * r;
+      ctx.beginPath();
+      for (let a = 0; a < numAxes; a++) {
+        const angle = -Math.PI / 2 + (a * (Math.PI * 2 / numAxes));
+        const rx = cx + Math.cos(angle) * ringRad;
+        const ry = cy + Math.sin(angle) * ringRad;
+        if (a === 0) ctx.moveTo(rx, ry);
+        else ctx.lineTo(rx, ry);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+
+    // Draw Spokes
+    for (let a = 0; a < numAxes; a++) {
+      const angle = -Math.PI / 2 + (a * (Math.PI * 2 / numAxes));
+      const rx = cx + Math.cos(angle) * radius;
+      const ry = cy + Math.sin(angle) * radius;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(rx, ry);
+      ctx.stroke();
+
+      // Axis labels
+      const lx = cx + Math.cos(angle) * (radius + 10);
+      const ly = cy + Math.sin(angle) * (radius + 10);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.font = '600 7px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(axisLabels[a], lx, ly);
+    }
+
+    // State Color Palette
+    const radarColor = st.isBottleneck ? '#EF4444' : st.isPredictedBottleneck ? '#FFAB40' : st.isBlocked ? '#F59E0B' : st.isStarved ? '#8B5CF6' : '#00E5FF';
+
+    // Draw Data Radar Polygon
+    ctx.beginPath();
+    for (let a = 0; a < numAxes; a++) {
+      const angle = -Math.PI / 2 + (a * (Math.PI * 2 / numAxes));
+      const valRad = radius * values[a];
+      const vx = cx + Math.cos(angle) * valRad;
+      const vy = cy + Math.sin(angle) * valRad;
+      if (a === 0) ctx.moveTo(vx, vy);
+      else ctx.lineTo(vx, vy);
+    }
+    ctx.closePath();
+
+    ctx.fillStyle = st.isBottleneck ? 'rgba(239, 68, 68, 0.35)' : 'rgba(0, 229, 255, 0.25)';
+    ctx.fill();
+    ctx.strokeStyle = radarColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw Vertex Nodes
+    for (let a = 0; a < numAxes; a++) {
+      const angle = -Math.PI / 2 + (a * (Math.PI * 2 / numAxes));
+      const valRad = radius * values[a];
+      const vx = cx + Math.cos(angle) * valRad;
+      const vy = cy + Math.sin(angle) * valRad;
+
+      ctx.fillStyle = radarColor;
+      ctx.beginPath();
+      ctx.arc(vx, vy, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // ==========================================
+  // 26d. ENTANGLED HYDRODYNAMIC BUFFER WATERFALL & SOLITON PROPAGATION
+  // ==========================================
+  let waterfallSolitonPos = 0;
+  function drawBufferWaterfall() {
+    const canvas = document.getElementById('canvas-buffer-waterfall');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.clientWidth || 800;
+    const h = canvas.height = 130;
+    ctx.clearRect(0, 0, w, h);
+
+    const time = performance.now() / 1000;
+    const numStations = sim.stations.length;
+    const pad = 35;
+    const colWidth = (w - pad * 2) / numStations;
+    const bottomY = h - 22;
+    const maxHeight = h - 45;
+
+    // Dark Background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(0, 0, w, h);
+
+    // Active Bottleneck Station Index
+    const btnkStation = sim.stations.find(s => s.isBottleneck);
+    const btnkIdx = btnkStation ? sim.stations.indexOf(btnkStation) : -1;
+
+    // Soliton wave propagation pulse
+    waterfallSolitonPos = (time * 8) % numStations;
+
+    // Draw 35 Liquid Columns
+    sim.stations.forEach((st, i) => {
+      const x = pad + i * colWidth;
+      const fillRatio = Math.min(1.0, Math.max(0.05, st.wipCount / (st.maxBuffer || 4)));
+      const colH = fillRatio * maxHeight;
+      const y = bottomY - colH;
+
+      const isSelected = (st.id === selectedStationId);
+      const isHovered = (st.id === waterfallStationHoverId);
+
+      // Hydrodynamic color: Backpressure amber upstream, Starvation purple downstream, Red bottleneck
+      let fluidColor = '#00E5FF';
+      if (st.isBottleneck) fluidColor = '#EF4444';
+      else if (st.isBlocked) fluidColor = '#F59E0B';
+      else if (st.isStarved) fluidColor = '#8B5CF6';
+      else if (st.isPredictedBottleneck) fluidColor = '#FFAB40';
+
+      // Traveling soliton ripple crest
+      const distFromSoliton = Math.abs(i - waterfallSolitonPos);
+      const rippleBoost = distFromSoliton < 2.0 ? Math.sin((2.0 - distFromSoliton) * Math.PI) * 5 : 0;
+
+      // Column background槽
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.fillRect(x + 2, bottomY - maxHeight, colWidth - 4, maxHeight);
+
+      // Liquid column gradient
+      const grad = ctx.createLinearGradient(0, y - rippleBoost, 0, bottomY);
+      grad.addColorStop(0, fluidColor);
+      grad.addColorStop(1, `${fluidColor}22`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(x + 2, y - rippleBoost, colWidth - 4, colH + rippleBoost);
+
+      // Liquid Surface Specular Meniscus
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x + 2, y - rippleBoost);
+      ctx.lineTo(x + colWidth - 2, y - rippleBoost);
+      ctx.stroke();
+
+      // Selection indicator
+      if (isSelected) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.8;
+        ctx.strokeRect(x + 1, bottomY - maxHeight - 2, colWidth - 2, maxHeight + 4);
+      }
+
+      // Station ID label
+      ctx.fillStyle = isSelected ? '#00E5FF' : isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.5)';
+      ctx.font = isSelected ? '800 8px Inter' : '600 7px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText(st.id, x + colWidth / 2, h - 8);
+    });
+
+    // Upstream / Downstream Flow Rays
+    if (btnkIdx >= 0) {
+      const bx = pad + btnkIdx * colWidth + colWidth / 2;
+      // Soliton arrow left (backpressure)
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(bx, 14);
+      ctx.lineTo(pad, 14);
+      ctx.stroke();
+
+      // Starvation arrow right
+      ctx.strokeStyle = 'rgba(139, 92, 246, 0.6)';
+      ctx.beginPath();
+      ctx.moveTo(bx, 14);
+      ctx.lineTo(w - pad, 14);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // Init Waterfall click interaction
+  function initWaterfallInteractivity() {
+    const canvas = document.getElementById('canvas-buffer-waterfall');
+    if (!canvas || canvas.dataset.bound) return;
+    canvas.dataset.bound = "true";
+
+    function getStationFromX(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      const mx = clientX - rect.left;
+      const pad = 35;
+      const numStations = sim.stations.length;
+      const colWidth = (canvas.clientWidth - pad * 2) / numStations;
+      if (mx < pad || mx > canvas.clientWidth - pad) return null;
+      const idx = Math.floor((mx - pad) / colWidth);
+      return sim.stations[idx] || null;
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const st = getStationFromX(e.clientX);
+      waterfallStationHoverId = st ? st.id : null;
+      canvas.style.cursor = st ? 'pointer' : 'default';
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      waterfallStationHoverId = null;
+    });
+
+    canvas.addEventListener('click', (e) => {
+      const st = getStationFromX(e.clientX);
+      if (st) {
+        selectStation(st.id, 'waterfall');
+        showToast(`Selected ${st.id} (${st.name || ''}) from Hydrodynamic Buffer Waterfall`, 'info');
+      }
+    });
+  }
+
   function drawEntropyGauge() {
     const canvas = document.getElementById('canvas-entropy-gauge');
     if (!canvas) return;
