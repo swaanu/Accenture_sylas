@@ -86,4 +86,5 @@ if (window.lineInstances && window.lineInstances['line-legacy'] && window.lineIn
     assert(healthGamma.score > healthBeta.score, `Modern line health index (${healthGamma.score}) strictly exceeds legacy line health index (${healthBeta.score})`);
 }
 
-console.log('\nRESULTS: ' + passCount + ' / ' + totalCount + ' ASSERTIONS PASSED (100% success)\n');
+const statusLabel = (passCount === totalCount) ? '(100% SUCCESS)' : `(${Math.round(100 * passCount / Math.max(1, totalCount))}% — FAILURES PRESENT)`;
+console.log('\nRESULTS: ' + passCount + ' / ' + totalCount + ' ASSERTIONS PASSED ' + statusLabel + '\n');

@@ -258,8 +258,8 @@ try:
     for item in value.get('testResults', []):
         status = 'PASS' if item.get('passed') else 'FAIL'
         print(f"  [{status}] {item.get('test')}: {item.get('detail')}")
-    print('------------------------------------------------------------')
-    print(f"  RESULTS: {value.get('passed', 0)} / {value.get('total', 0)} ASSERTIONS PASSED (100% SUCCESS)")
+    status_label = "(100% SUCCESS)" if value.get('allPassed', False) else f"({round(100 * value.get('passed', 0) / max(1, value.get('total', 1)))}% — FAILURES PRESENT)"
+    print(f"  RESULTS: {value.get('passed', 0)} / {value.get('total', 0)} ASSERTIONS PASSED {status_label}")
     print('============================================================\n')
 
     if not value.get('allPassed', False):

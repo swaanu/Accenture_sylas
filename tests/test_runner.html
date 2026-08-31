@@ -190,7 +190,8 @@
             `).join('');
 
             const summary = document.getElementById('summary-container');
-            summary.innerHTML = `✓ ${pass} / ${total} ASSERTIONS PASSED (100% success)`;
+            const statusStr = (pass === total) ? '(100% success)' : `(${Math.round(100 * pass / Math.max(1, total))}% — FAILURES PRESENT)`;
+            summary.innerHTML = `${pass === total ? '✓' : '✗'} ${pass} / ${total} ASSERTIONS PASSED ${statusStr}`;
         };
     </script>
 </body>
