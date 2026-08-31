@@ -2038,3 +2038,92 @@ main { padding: 1rem 1.5rem; max-width: 1920px; margin: 0 auto; }
 .waterfall-card canvas:hover {
     box-shadow: inset 0 0 15px rgba(0, 229, 255, 0.15);
 }
+
+/* Team Sylas Credentials Strip in Intro */
+.intro-team-strip {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.8rem;
+    box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.03);
+}
+
+.team-header-label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.58rem; font-weight: 800; letter-spacing: 0.08em;
+    color: #00E5FF; font-family: var(--font-mono); margin-bottom: 0.4rem;
+}
+
+.team-dot.pulse-emerald {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #10B981; box-shadow: 0 0 6px #10B981;
+    animation: neon-flicker 2s infinite;
+}
+
+.team-members-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;
+}
+
+.team-member-card {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 0.35rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.2s ease;
+}
+
+.team-member-card:hover {
+    border-color: rgba(0, 229, 255, 0.4);
+    background: rgba(0, 229, 255, 0.06);
+}
+
+.team-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    object-fit: cover; object-position: top;
+    border: 1.5px solid #00E5FF;
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+    flex-shrink: 0;
+}
+
+.team-member-info { min-width: 0; flex: 1; }
+
+.team-name {
+    font-size: 0.72rem; font-weight: 800; color: #F1F5F9;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: flex; align-items: center; gap: 4px;
+}
+
+.team-role-tag {
+    font-size: 0.52rem; font-weight: 700; padding: 1px 4px;
+    border-radius: 3px; font-family: var(--font-mono);
+}
+
+.team-role-tag.leader {
+    background: rgba(168, 85, 247, 0.2); color: #C084FC;
+    border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+.team-role-tag.core {
+    background: rgba(59, 130, 246, 0.2); color: #60A5FA;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.team-meta {
+    font-size: 0.58rem; color: #94A3B8; margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Architecture Chips */
+.intro-tech-chips {
+    display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.8rem;
+    justify-content: space-between;
+}
+
+.tech-chip {
+    font-size: 0.6rem; font-weight: 700; font-family: var(--font-mono);
+    padding: 2px 6px; border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #CBD5E1; border: 1px solid rgba(255, 255, 255, 0.08);
+}
