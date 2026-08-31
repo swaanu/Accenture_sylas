@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+    
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -40,12 +43,12 @@
             <h3>Keyboard Shortcuts</h3>
             <ul>
                 <li><code>Space</code> Play / Pause Simulation</li>
-                <li><code>S</code> Step Forward</li>
-                <li><code>1-5</code> Switch Stakeholder Views</li>
-                <li><code>?</code> Toggle Shortcuts</li>
-                <li><code>Esc</code> Close Modals</li>
+                <li><code>S</code> Step 1 Tick Forward (when paused)</li>
+                <li><code>1-5</code> Switch Primary Stakeholder Views</li>
+                <li><code>?</code> Toggle Shortcuts Modal</li>
+                <li><code>Esc</code> Close Modals & Context Menus</li>
             </ul>
-            <button class="btn ripple">Close</button>
+            <button class="btn ripple" onclick="document.getElementById('shortcuts-modal').style.display='none'">Close</button>
         </div>
     </div>
 

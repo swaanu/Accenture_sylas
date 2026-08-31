@@ -3939,16 +3939,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function initKeyboardShortcuts() {
     window.addEventListener('keydown', e => {
-      if(e.key === ' ') { 
+      // Don't trigger simulation shortcuts if typing inside an input, textarea, or select element
+      const activeTag = document.activeElement ? document.activeElement.tagName : '';
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
+
+      if (e.key === ' ') { 
         isSimPaused = !isSimPaused;
         const playPauseBtn = document.getElementById('btn-play-pause');
         if (playPauseBtn) playPauseBtn.textContent = isSimPaused ? '▶' : '⏸';
         updateLiveIndicator();
         e.preventDefault(); 
-      }
-      if(e.key >= '1' && e.key <= '5') {
+      } else if (e.key >= '1' && e.key <= '5') {
         const tabs = ['supervisor', 'manager', 'leadership', 'modelling', 'predictive'];
-        switchTab(tabs[parseInt(e.key)-1]);
+        switchTab(tabs[parseInt(e.key) - 1]);
+      } else if (e.key === 's' || e.key === 'S') {
+        if (isSimPaused) {
+          sim.updateContinuous(0.1);
+          updateDynamicUI();
+          showToast('Stepped 1 tick forward', 'info');
+        }
+      } else if (e.key === '?') {
+        const modal = document.getElementById('shortcuts-modal');
+        if (modal) modal.style.display = (modal.style.display === 'flex' || modal.style.display === 'block') ? 'none' : 'flex';
+      } else if (e.key === 'Escape') {
+        const modal = document.getElementById('shortcuts-modal');
+        if (modal) modal.style.display = 'none';
+        const ctx = document.getElementById('context-menu');
+        if (ctx) ctx.style.display = 'none';
       }
     });
   }

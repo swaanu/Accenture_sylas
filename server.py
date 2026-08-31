@@ -15,6 +15,7 @@ if __name__ == '__main__':
     web_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(web_dir)
 
+    socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), Handler) as httpd:
         print(f"[DigitalTwin.ai] Server running at http://localhost:{PORT}")
         print("Press Ctrl+C to stop the server.")
