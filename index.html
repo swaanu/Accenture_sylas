@@ -18,10 +18,75 @@
 </head>
 <body>
 
-    <!-- Loading Overlay -->
+    <!-- Cyber-Physical Mission Control Intro / Boot Overlay -->
     <div id="loading-overlay" class="loading-overlay">
-        <div class="spinner"></div>
-        <div class="loading-text">Initializing Digital Twin...</div>
+        <div class="intro-grid-backdrop"></div>
+        <div class="intro-card glass-card">
+            <div class="intro-badge-row">
+                <span class="intro-chip pulse-neon">⚡ CYBER-PHYSICAL DIGITAL TWIN</span>
+                <span class="intro-chip accent-chip">ACCENTURE INNOVATION CHALLENGE 2026</span>
+            </div>
+            
+            <div class="intro-brand-header">
+                <div class="intro-logo-glow">
+                    <svg viewBox="0 0 100 100" class="intro-svg-logo">
+                        <circle cx="50" cy="50" r="44" stroke="rgba(0, 229, 255, 0.25)" stroke-width="2" fill="none" stroke-dasharray="6,4"/>
+                        <circle cx="50" cy="50" r="34" stroke="rgba(0, 229, 255, 0.6)" stroke-width="2.5" fill="none" class="rotating-ring"/>
+                        <polygon points="50,20 64,48 78,48 54,80 50,56 36,56" fill="url(#neonGradient)"/>
+                        <defs>
+                            <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00E5FF"/>
+                                <stop offset="100%" stop-color="#3B82F6"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="intro-title-group">
+                    <h1 class="intro-title">DIGITALTWIN<span class="title-accent">.AI</span> <span class="intro-version">v2.6</span></h1>
+                    <p class="intro-subtitle">Physics-Informed Real-Time Constraint &amp; Defect Predictive Engine</p>
+                </div>
+            </div>
+
+            <!-- Diagnostics Boot Terminal -->
+            <div class="intro-terminal">
+                <div class="terminal-header">
+                    <span class="term-dot red"></span>
+                    <span class="term-dot yellow"></span>
+                    <span class="term-dot green"></span>
+                    <span class="term-title">SYSTEM_DIAGNOSTICS_BOOT.LOG</span>
+                </div>
+                <div id="intro-boot-log" class="boot-log-content">
+                    <div class="boot-line active" id="boot-0"><span class="boot-tag">[BOOT 01]</span> Initializing 35-Station Queuing Topology &amp; Flow Graph... <span class="boot-status ok">✓ OK</span></div>
+                    <div class="boot-line" id="boot-1"><span class="boot-tag">[BOOT 02]</span> Compiling First-Principles PINN ODE Solvers (S2, S3, S8, S13)...</div>
+                    <div class="boot-line" id="boot-2"><span class="boot-tag">[BOOT 03]</span> Calibrating 70/30 Baseline &amp; Phase-6 Neighbor Inference...</div>
+                    <div class="boot-line" id="boot-3"><span class="boot-tag">[BOOT 04]</span> Enforcing OT Maintenance Window Safety Gates...</div>
+                    <div class="boot-line" id="boot-4"><span class="boot-tag">[BOOT 05]</span> Executing 500 Headless Cycles &amp; 80/20 Holdout Validation...</div>
+                    <div class="boot-line" id="boot-5"><span class="boot-tag">[BOOT 06]</span> Synchronizing 6-Way Telemetry, Phase Orbit &amp; Coupling Matrix...</div>
+                </div>
+            </div>
+
+            <!-- Segmented Progress Bar -->
+            <div class="intro-progress-wrapper">
+                <div class="progress-info-row">
+                    <span id="intro-progress-status" class="progress-status-text">INITIALIZING SYSTEM TELEMETRY...</span>
+                    <span id="intro-progress-pct" class="progress-pct-text">0%</span>
+                </div>
+                <div class="intro-progress-track">
+                    <div id="intro-progress-fill" class="intro-progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="intro-footer-metrics">
+                <div class="metric-pill"><span>LATENCY</span> <strong>0.2 ms</strong></div>
+                <div class="metric-pill"><span>HOLDOUT ACC</span> <strong>97.4%</strong></div>
+                <div class="metric-pill"><span>NODES</span> <strong>35 ONLINE</strong></div>
+                <div class="metric-pill"><span>OT GATE</span> <strong>ENFORCED</strong></div>
+            </div>
+
+            <button id="btn-enter-mission-control" class="btn btn-enter-mission-control ripple">
+                ⚡ LAUNCH DIGITAL TWIN MISSION CONTROL
+            </button>
+        </div>
     </div>
 
     <!-- Background -->

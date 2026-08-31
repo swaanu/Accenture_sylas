@@ -165,14 +165,101 @@ document.addEventListener('DOMContentLoaded', () => {
     updateEnvironmentDisplay();
     switchTab('supervisor');
     
-    // Hide overlay
+    // Run High-Impact Cyber-Physical Intro Sequence
     const overlay = document.getElementById('loading-overlay');
+    const progressBar = document.getElementById('intro-progress-fill');
+    const progressPct = document.getElementById('intro-progress-pct');
+    const progressStatus = document.getElementById('intro-progress-status');
+    const enterBtn = document.getElementById('btn-enter-mission-control');
+    const bootLines = [
+      document.getElementById('boot-0'),
+      document.getElementById('boot-1'),
+      document.getElementById('boot-2'),
+      document.getElementById('boot-3'),
+      document.getElementById('boot-4'),
+      document.getElementById('boot-5')
+    ];
+
+    const statusMessages = [
+      'INITIALIZING 35-STATION FLOW GRAPH...',
+      'SOLVING FIRST-PRINCIPLES PINN ODEs (S2, S3, S8, S13)...',
+      'CALIBRATING 70/30 BASELINE & TOPOLOGY...',
+      'ENFORCING OT MAINTENANCE SAFETY GATES...',
+      'EVALUATING 500-CYCLE 80/20 HOLDOUT...',
+      'SYNCHRONIZING 6-WAY TELEMETRY & MATRICES...',
+      'ALL SYSTEMS ONLINE · MISSION CONTROL READY'
+    ];
+
+    let bootStep = 0;
+    const totalSteps = bootLines.length;
+    let autoLaunchTimer = null;
+
+    function advanceBootSequence() {
+      if (bootStep < totalSteps) {
+        // Mark current as done with green checkmark
+        if (bootLines[bootStep]) {
+          bootLines[bootStep].classList.remove('active');
+          bootLines[bootStep].classList.add('done');
+          if (!bootLines[bootStep].querySelector('.boot-status')) {
+            const okSpan = document.createElement('span');
+            okSpan.className = 'boot-status ok';
+            okSpan.textContent = '✓ OK';
+            bootLines[bootStep].appendChild(okSpan);
+          }
+        }
+        bootStep++;
+
+        // Highlight next line
+        if (bootStep < totalSteps && bootLines[bootStep]) {
+          bootLines[bootStep].classList.add('active');
+        }
+
+        const pct = Math.round((bootStep / totalSteps) * 100);
+        if (progressBar) progressBar.style.width = pct + '%';
+        if (progressPct) progressPct.textContent = pct + '%';
+        if (progressStatus && statusMessages[bootStep]) progressStatus.textContent = statusMessages[bootStep];
+
+        setTimeout(advanceBootSequence, 280);
+      } else {
+        // Completed
+        if (progressBar) progressBar.style.width = '100%';
+        if (progressPct) progressPct.textContent = '100%';
+        if (progressStatus) progressStatus.textContent = 'ALL SYSTEMS SYNCHRONIZED · READY';
+
+        if (enterBtn) {
+          enterBtn.style.display = 'block';
+          enterBtn.focus();
+        }
+
+        function dismissOverlay() {
+          if (!overlay || overlay.dataset.dismissed) return;
+          overlay.dataset.dismissed = "true";
+          overlay.style.opacity = '0';
+          overlay.style.transform = 'scale(1.04)';
+          setTimeout(() => overlay.remove(), 800);
+          showToast('⚡ Digital Twin Online: 35 Stations Synced across 6 Views', 'success');
+        }
+
+        if (enterBtn) {
+          enterBtn.onclick = dismissOverlay;
+        }
+
+        // Auto dismiss after 1.2s if unattended
+        autoLaunchTimer = setTimeout(dismissOverlay, 1400);
+
+        // Enter key dismiss
+        window.addEventListener('keydown', function onIntroKey(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            window.removeEventListener('keydown', onIntroKey);
+            clearTimeout(autoLaunchTimer);
+            dismissOverlay();
+          }
+        });
+      }
+    }
+
     if (overlay) {
-      setTimeout(() => {
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.remove(), 1000);
-        showToast('Digital Twin initialized, all 35 stations online', 'success');
-      }, 2000);
+      setTimeout(advanceBootSequence, 150);
     }
     
     // Start loop
