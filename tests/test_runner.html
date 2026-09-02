@@ -178,6 +178,47 @@
                 scoreDetail
             );
 
+        // Stress Test 5: Thermal-Mechanical Frame Expansion Coupling
+        const stS4 = window.simEngine.getStation('S4');
+        window.simEngine.computeThermalMechanicalCoupling(stS4, 1.0);
+        const s4Coupling = stS4.thermalCoupling;
+        const s4ExpansionValid = s4Coupling && s4Coupling.thermalExpansionMm >= 0.05 && s4Coupling.thermalExpansionMm <= 0.85;
+        check(
+            s4ExpansionValid,
+            'Thermal-Mechanical Coupling: S4 frame elongation (Delta L) bounded within 0.05-0.85mm',
+            `S4 Delta L: ${s4Coupling?.thermalExpansionMm}mm (T_chassis: ${s4Coupling?.chassisTemp?.toFixed(1)}C)`
+        );
+
+        // Stress Test 6: 2-Parameter Weibull Tool RUL Prognostics
+        const stS8 = window.simEngine.getStation('S8');
+        window.simEngine.computeStationWeibullRul(stS8, 1.0);
+        const s8Weibull = stS8.weibull;
+        const s8WeibullValid = s8Weibull && s8Weibull.beta > 1.0 && s8Weibull.reliability > 0 && s8Weibull.reliability <= 1.0 && s8Weibull.rulHours > 0;
+        check(
+            s8WeibullValid,
+            'Weibull RUL Prognostics: S8 tool wearout model evaluates with beta>1.0 and valid RUL',
+            `S8 Beta: ${s8Weibull?.beta?.toFixed(2)}, Rel: ${s8Weibull?.reliability?.toFixed(3)}, RUL: ${s8Weibull?.rulHours}h`
+        );
+
+        // Stress Test 7: Mixed-Model Variant Cycle Dwell Signatures
+        const evModel = window.simEngine.vehicleModels.find(m => m.code === 'EV-SEDAN');
+        const iceModel = window.simEngine.vehicleModels.find(m => m.code === 'ICE-LUXURY');
+        const mixedDwellValid = evModel && iceModel && evModel.specialDwells.S24 === 72 && iceModel.specialDwells.S24 === 0;
+        check(
+            mixedDwellValid,
+            'Mixed-Model Sequencing: EV battery marriage dwell (72s @ S24) strictly exceeds ICE bypass (0s)',
+            `EV S24: ${evModel?.specialDwells?.S24}s vs ICE S24: ${iceModel?.specialDwells?.S24}s`
+        );
+
+        // Stress Test 8: Takt Harmony Line Balancer
+        const taktSummary = window.simEngine.getTaktTimeHarmonySummary();
+        const taktValid = taktSummary && taktSummary.lineEfficiencyPct >= 70.0 && taktSummary.totalStations === 35;
+        check(
+            taktValid,
+            'Takt-Time Harmony: Line balancing efficiency meets >= 70.0% industrial benchmark',
+            `Line Efficiency: ${taktSummary?.lineEfficiencyPct}%, Balanced: ${taktSummary?.balancedCount}/35`
+        );
+
             const container = document.getElementById('test-container');
             container.innerHTML = results.map(r => `
                 <div class="test-item">

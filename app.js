@@ -1114,6 +1114,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // 13. Telemetry Oscilloscope
   // ==========================================
   function drawTelemetryOscilloscope() {
+    if (currentTelemetryTab === 'weibull') {
+      drawWeibullRulCurve();
+      return;
+    }
     if (currentTelemetryTab === 'radar') {
       drawTelemetryRadar();
       return;
@@ -1237,6 +1241,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Weibull RUL Telemetry Tab
+    const tabWeibull = document.getElementById('tab-tel-weibull');
+    if (tabWeibull) {
+      tabWeibull.addEventListener('click', () => {
+        currentTelemetryTab = 'weibull';
+        document.querySelectorAll('.tel-tab-btn').forEach(b => b.classList.remove('active'));
+        tabWeibull.classList.add('active');
+        drawTelemetryOscilloscope();
+      });
+    }
     // 6-Axis Radar Telemetry Tab
     const tabRadar = document.getElementById('tab-tel-radar');
     if (tabRadar) {
@@ -4711,6 +4725,187 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   // 26c. 6-AXIS MULTI-CAUSAL TELEMETRY RADAR
   // ==========================================
+
+  // ==========================================
+  // 26e. WEIBULL TOOL RUL SURVIVAL CURVE
+  // ==========================================
+  function drawWeibullRulCurve() {
+    const canvas = document.getElementById('canvas-telemetry');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.clientWidth || 360;
+    const h = canvas.height = 120;
+    ctx.clearRect(0, 0, w, h);
+
+    const st = sim.stations.find(s => s.id === selectedStationId);
+    if (!st || !st.weibull) return;
+    const data = sim.getStationWeibullCurve(st.id);
+    if (!data || !data.curve) return;
+
+    const padLeft = 35;
+    const padRight = 15;
+    const padTop = 15;
+    const padBottom = 22;
+    const chartW = w - padLeft - padRight;
+    const chartH = h - padTop - padBottom;
+
+    // Grid lines
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+    for (let r = 0; r <= 4; r++) {
+      const y = padTop + (chartH / 4) * r;
+      ctx.beginPath();
+      ctx.moveTo(padLeft, y);
+      ctx.lineTo(w - padRight, y);
+      ctx.stroke();
+
+      const pct = Math.round(100 - (r * 25));
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.font = '600 7px Inter';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${pct}%`, padLeft - 4, y + 2.5);
+    }
+
+    // Reliability Curve R(n)
+    const pts = data.curve;
+    const maxCycles = pts[pts.length - 1].cycles;
+    ctx.strokeStyle = '#00E5FF';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    pts.forEach((p, idx) => {
+      const x = padLeft + (p.cycles / maxCycles) * chartW;
+      const y = padTop + (1 - p.reliability) * chartH;
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Hazard Rate h(n) line (Amber dashed)
+    ctx.strokeStyle = 'rgba(255, 171, 64, 0.6)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    const maxHaz = Math.max(...pts.map(p => p.hazard)) || 1;
+    pts.forEach((p, idx) => {
+      const x = padLeft + (p.cycles / maxCycles) * chartW;
+      const y = padTop + (1 - Math.min(1.0, p.hazard / maxHaz)) * chartH;
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Current Operating Cycle Point
+    const curX = padLeft + (data.currentEquivalentCycles / maxCycles) * chartW;
+    const curY = padTop + (1 - data.currentReliability) * chartH;
+
+    ctx.fillStyle = data.currentReliability < 0.85 ? '#EF4444' : '#10B981';
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(curX, curY, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Header Annotation
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 8px Inter';
+    ctx.textAlign = 'left';
+    ctx.fillText(`WEIBULL β=${data.beta.toFixed(2)} · η=${Math.round(data.etaCycles / 1000)}k cycles · RUL: ${data.rulHours} hrs (Rel: ${(data.currentReliability * 100).toFixed(1)}%)`, padLeft, 10);
+  }
+
+  // ==========================================
+  // 26f. 35-STATION TAKT HARMONY STACK
+  // ==========================================
+  function drawTaktHarmonyStack() {
+    const canvas = document.getElementById('canvas-takt-harmony');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.clientWidth || 450;
+    const h = canvas.height = 130;
+    ctx.clearRect(0, 0, w, h);
+
+    const summary = sim.getTaktTimeHarmonySummary();
+    if (!summary) return;
+
+    const padLeft = 25;
+    const padRight = 10;
+    const bottomY = h - 18;
+    const maxHeight = h - 35;
+    const numStations = summary.stationMetrics.length;
+    const barW = (w - padLeft - padRight) / numStations;
+
+    // Background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(0, 0, w, h);
+
+    // 60s Target Takt Line (Cyan dashed)
+    const taktY = bottomY - (60 / 90) * maxHeight;
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.8)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(padLeft, taktY);
+    ctx.lineTo(w - padRight, taktY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 35 Station Bars
+    summary.stationMetrics.forEach((m, idx) => {
+      const x = padLeft + idx * barW;
+      const barH = (m.actualCycle / 90) * maxHeight;
+      const y = bottomY - barH;
+
+      const isOver = m.status === 'OVER_TAKT';
+      const isUnder = m.status === 'UNDER_UTILIZED';
+      const col = isOver ? '#EF4444' : isUnder ? '#8B5CF6' : '#00E5FF';
+
+      ctx.fillStyle = col;
+      ctx.fillRect(x + 1, y, barW - 2, barH);
+
+      // Station ID
+      if (idx % 2 === 0) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.font = '600 6px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(m.id, x + barW / 2, h - 5);
+      }
+    });
+
+    // Update efficiency badge
+    const badge = document.getElementById('takt-efficiency-badge');
+    if (badge) {
+      badge.textContent = `${summary.lineEfficiencyPct}% BALANCED (${summary.balancedCount}/35)`;
+    }
+  }
+
+  // Update Mixed-Model Queue Display in Manager View
+  function updateMixedModelDisplay() {
+    const queueCont = document.getElementById('mixed-model-queue-container');
+    const statsCont = document.getElementById('mixed-model-stats');
+    if (!queueCont || !statsCont) return;
+
+    const opt = predEngine ? predEngine.getMixedModelSequenceOptimization() : null;
+    if (!opt) return;
+
+    queueCont.innerHTML = opt.optimizedSequence.map((v, i) => {
+      const color = v === 'EV-SEDAN' ? '#00E5FF' : v === 'HYBRID-SUV' ? '#FFAB40' : '#A855F7';
+      const label = v === 'EV-SEDAN' ? '⚡ EV' : v === 'HYBRID-SUV' ? '🔋 PHEV' : '⛽ ICE';
+      return `<div style="padding:4px 8px; border-radius:6px; background:rgba(0,0,0,0.4); border:1px solid ${color}; color:${color}; font-size:0.68rem; font-weight:700; white-space:nowrap; flex-shrink:0;">
+        #${i+1} ${label}
+      </div>`;
+    }).join('');
+
+    statsCont.innerHTML = `
+      <span>Queue Entropy: <strong style="color:#00E5FF;">${opt.queueEntropy}</strong></span>
+      <span>Bottleneck Risk: <strong style="color:#10B981;">-${opt.bottleneckRiskReductionPct}%</strong></span>
+      <span>Takt Variance: <strong style="color:#FFAB40;">±${opt.taktVarianceAfter}s</strong></span>
+    `;
+  }
+
   function drawTelemetryRadar() {
     const canvas = document.getElementById('canvas-telemetry');
     if (!canvas) return;

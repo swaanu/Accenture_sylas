@@ -108,10 +108,35 @@ class SimulationEngine {
         this.recallHistory = [];
         this.vehicleSpawnIntervalSec = this.config.spawnIntervalSec || 58;
         
+        // Priority 2 — Mixed-Model Variants with Distinct Station Dwell Signatures
         this.vehicleModels = [
-            { type: 'SUV-EV Pro', cycleFactor: 1.05, color: '#80D8FF' },
-            { type: 'Sedan-EV Core', cycleFactor: 0.95, color: '#2979FF' },
-            { type: 'GT-EV Performance', cycleFactor: 1.12, color: '#40C4FF' }
+            { 
+                type: 'Sedan-EV Core', 
+                code: 'EV-SEDAN', 
+                cycleFactor: 1.0, 
+                color: '#00E5FF',
+                batteryKWh: 85,
+                specialDwells: { S24: 72, S27: 68, S22: 0 }, // S24 Battery Marriage: 72s, S22 Exhaust: 0s (Bypass)
+                thermalSensitivity: 1.15
+            },
+            { 
+                type: 'SUV-Hybrid Pro', 
+                code: 'HYBRID-SUV', 
+                cycleFactor: 1.05, 
+                color: '#FFAB40',
+                batteryKWh: 18,
+                specialDwells: { S24: 48, S22: 45, S26: 66 }, // Dual powertrain dwell
+                thermalSensitivity: 1.0
+            },
+            { 
+                type: 'Luxury-ICE Sport', 
+                code: 'ICE-LUXURY', 
+                cycleFactor: 0.98, 
+                color: '#A855F7',
+                batteryKWh: 0,
+                specialDwells: { S24: 0, S22: 62, S25: 64 }, // S24 Battery: 0s (Bypass), S22 Exhaust: 62s
+                thermalSensitivity: 0.85
+            }
         ];
 
         this.initStations();
@@ -202,6 +227,29 @@ class SimulationEngine {
                 modellingApproach: modellingApproach,
                 spcState: { cpk: 1.5, ppk: 1.5, inControl: true, trend: 'stable' },
                 rul: { hoursRemaining: 2000 + Math.random() * 6000, degradationRate: 0.1 + Math.random() * 0.4 },
+                
+                // Priority 1 — 2-Parameter Weibull Tool RUL Model
+                weibull: {
+                    beta: 2.2 + (i % 5) * 0.2, // Shape parameter β > 1 (aging wearout regime)
+                    etaCycles: 180000 + (i % 7) * 15000, // Characteristic life scale parameter η
+                    cumulativeCycles: 45000 + (i * 3200),
+                    equivalentStressCycles: 45000 + (i * 3200),
+                    hazardRate: 0.000012,
+                    reliability: 0.985,
+                    rulCycles: 120000,
+                    rulHours: 2000,
+                    stressAccelerationFactor: 1.0,
+                    b10LifeCycles: 110000,
+                    b50LifeCycles: 175000
+                },
+
+                // Priority 3 — Inter-Station Thermal-Mechanical Expansion
+                thermalCoupling: {
+                    chassisTemp: 22.5,
+                    thermalExpansionMm: 0.0,
+                    frictionTorquePenalty: 0.0,
+                    heatSourceStation: (i === 3 || i === 4) ? 'S3' : (i === 13 || i === 14) ? 'S13' : null
+                },
                 anomalyFlags: [],
                 failedSensors: [],
                 wipHistory: [],
@@ -370,6 +418,8 @@ class SimulationEngine {
         for (let i = 0; i < this.stations.length; i++) {
             let st = this.stations[i];
             st.rul.hoursRemaining -= st.rul.degradationRate * (dt / 3600);
+            this.computeStationWeibullRul(st, dt);
+            this.computeThermalMechanicalCoupling(st, dt);
             let baseCycle = st.targetCycle * st.fatigueMultiplier;
             baseCycle += (Math.random() * 6 - 3);
             if (st.zone === 'Paint' && this.environment.humidity > 60) {
@@ -423,7 +473,12 @@ class SimulationEngine {
             }
 
             if (!st.isBlocked && !this.shiftState.changeoverActive) {
-                v.progressPct += (100 / (st.actualCycle * v.model.cycleFactor)) * dt;
+                                let effectiveStationCycle = st.actualCycle * v.model.cycleFactor;
+                if (v.model.specialDwells && typeof v.model.specialDwells[st.id] === 'number') {
+                    const customDwell = v.model.specialDwells[st.id];
+                    effectiveStationCycle = customDwell === 0 ? 0.01 : customDwell; // 0s bypass takes near-instant progress
+                }
+                v.progressPct += (100 / Math.max(0.01, effectiveStationCycle)) * dt;
                 if (v.progressPct >= 100) {
                     st.wipCount--;
                     st.currentVehicle = null;
@@ -910,6 +965,180 @@ class SimulationEngine {
         // header's System Trust Score, so the two now agree.
         const confVals = Object.values(station.signalConfidence);
         station.confidence = confVals.reduce((a, b) => a + b, 0) / confVals.length;
+    }
+
+
+    // ================================================================
+    // Priority 1 — 2-Parameter Weibull Tool Life & RUL Engine
+    // ================================================================
+    computeStationWeibullRul(station, dt) {
+        if (!station.weibull) return;
+        const w = station.weibull;
+        
+        // Stress acceleration: Arrhenius temperature effect + mechanical torque load exponent
+        const liveTemp = station.measurements.temperature || 25;
+        const liveTorque = station.measurements.torque || 100;
+        const tempStress = Math.exp((1200 / 8.314) * (1 / 295.15 - 1 / (273.15 + liveTemp)));
+        const torqueStress = Math.pow(Math.max(0.5, liveTorque / 100.0), 1.8);
+        const accelerationFactor = Math.min(4.5, Math.max(0.7, tempStress * torqueStress));
+        w.stressAccelerationFactor = accelerationFactor;
+
+        // Advance cycle accumulation
+        const cyclesPerSec = (1 / Math.max(30, station.actualCycle));
+        const deltaCycles = cyclesPerSec * dt;
+        w.cumulativeCycles += deltaCycles;
+        w.equivalentStressCycles += deltaCycles * accelerationFactor;
+
+        const n = w.equivalentStressCycles;
+        const eta = w.etaCycles;
+        const beta = w.beta;
+
+        // Weibull Reliability R(n) = exp(-(n/eta)^beta)
+        const ratio = Math.max(0.001, n / eta);
+        const rel = Math.exp(-Math.pow(ratio, beta));
+        w.reliability = Math.max(0.001, Math.min(0.999, rel));
+
+        // Instantaneous Hazard Rate h(n) = (beta/eta) * (n/eta)^(beta-1)
+        const haz = (beta / eta) * Math.pow(ratio, beta - 1);
+        w.hazardRate = haz;
+
+        // RUL to B10 (90% survival) and B1 (99% survival)
+        const b10Cycles = eta * Math.pow(-Math.log(0.90), 1 / beta);
+        const b50Cycles = eta * Math.pow(Math.LN2, 1 / beta);
+        const b05Cycles = eta * Math.pow(-Math.log(0.05), 1 / beta);
+        
+        w.b10LifeCycles = Math.round(b10Cycles);
+        w.b50LifeCycles = Math.round(b50Cycles);
+
+        const remainingCycles = Math.max(0, b05Cycles - n);
+        w.rulCycles = Math.round(remainingCycles);
+        w.rulHours = parseFloat(((remainingCycles * station.targetCycle) / 3600).toFixed(1));
+
+        // Sync with legacy RUL for backward compatibility
+        station.rul.hoursRemaining = w.rulHours;
+    }
+
+    getStationWeibullCurve(stationId) {
+        const st = this.getStation(stationId);
+        if (!st || !st.weibull) return null;
+        const w = st.weibull;
+        const points = [];
+        const maxN = w.etaCycles * 1.5;
+        const step = maxN / 30;
+        for (let x = 0; x <= maxN; x += step) {
+            const r = Math.exp(-Math.pow(x / w.etaCycles, w.beta));
+            const h = (w.beta / w.etaCycles) * Math.pow(x / w.etaCycles, w.beta - 1);
+            points.push({ cycles: Math.round(x), reliability: parseFloat(r.toFixed(3)), hazard: parseFloat((h * 1e5).toFixed(3)) });
+        }
+        return {
+            stationId,
+            beta: w.beta,
+            etaCycles: w.etaCycles,
+            currentEquivalentCycles: Math.round(w.equivalentStressCycles),
+            currentReliability: parseFloat(w.reliability.toFixed(3)),
+            rulHours: w.rulHours,
+            rulCycles: w.rulCycles,
+            accelerationFactor: parseFloat(w.stressAccelerationFactor.toFixed(2)),
+            curve: points
+        };
+    }
+
+    // ================================================================
+    // Priority 3 — Inter-Station Thermal-Mechanical Expansion Solver
+    // ================================================================
+    computeThermalMechanicalCoupling(station, dt) {
+        if (!station.thermalCoupling) return;
+        const tc = station.thermalCoupling;
+        const ambientTemp = this.environment?.ambientTemp || 22.5;
+
+        if (station.id === 'S4' || station.id === 'S5') {
+            // S4 and S5 receive hot welded chassis from Station S3
+            const s3 = this.getStation('S3');
+            const s3Temp = s3?.measurements?.temperature || 212.0;
+            const distFromS3 = (station.id === 'S4') ? 1 : 2;
+            const transitTimeSec = distFromS3 * 45; // ~45s transfer per station
+
+            // Newton-Fourier convective cooling during transit
+            const coolingRate = 0.022; // 1/s
+            const chassisTemp = ambientTemp + (s3Temp - ambientTemp) * Math.exp(-coolingRate * transitTimeSec);
+            tc.chassisTemp = chassisTemp;
+
+            // Longitudinal thermal expansion: Delta L = alpha * L_0 * Delta T
+            // Steel alpha = 12.0e-6 /K, subframe joint fixture span L_0 = 0.95m
+            const alphaSteel = 12.0e-6;
+            const L0 = 0.95; // meters (localized joint fixture span)
+            const deltaT = Math.max(0, chassisTemp - ambientTemp);
+            const expansionMm = alphaSteel * L0 * deltaT * 1000; // in mm
+            tc.thermalExpansionMm = parseFloat(expansionMm.toFixed(3));
+
+            // Fastener Hole Clearance Binding: Clearance c_0 = 0.8mm
+            // Eccentricity induces side-wall thread friction penalty (up to +35% torque spike)
+            const clearanceMm = 0.8;
+            const frictionPenalty = Math.min(0.40, (expansionMm / clearanceMm) * 0.28);
+            tc.frictionTorquePenalty = parseFloat(frictionPenalty.toFixed(3));
+
+            // Apply coupling to S4/S5 effective torque measurement
+            const nominalTorque = 105.0;
+            station.measurements.torque = nominalTorque * (1 + frictionPenalty) + (Math.random() * 2 - 1);
+        } else if (station.id === 'S14' || station.id === 'S15') {
+            // S14 and S15 receive hot baked chassis from Paint Oven S13
+            const s13 = this.getStation('S13');
+            const s13Temp = s13?.measurements?.temperature || 150.0;
+            const distFromS13 = (station.id === 'S14') ? 1 : 2;
+            const transitTimeSec = distFromS13 * 40;
+
+            const coolingRate = 0.028;
+            const chassisTemp = ambientTemp + (s13Temp - ambientTemp) * Math.exp(-coolingRate * transitTimeSec);
+            tc.chassisTemp = chassisTemp;
+
+            const alphaSteel = 12.0e-6;
+            const L0 = 1.85;
+            const deltaT = Math.max(0, chassisTemp - ambientTemp);
+            const expansionMm = alphaSteel * L0 * deltaT * 1000;
+            tc.thermalExpansionMm = parseFloat(expansionMm.toFixed(3));
+        } else {
+            tc.chassisTemp = ambientTemp;
+            tc.thermalExpansionMm = 0.0;
+            tc.frictionTorquePenalty = 0.0;
+        }
+    }
+
+    // ================================================================
+    // Priority 2 — Mixed-Model Takt-Time Harmony & Line Balancing
+    // ================================================================
+    getTaktTimeHarmonySummary() {
+        const taktTime = this.config.targetCycle || 60.0;
+        const stationMetrics = this.stations.map(st => {
+            const actual = st.actualCycle;
+            const variance = actual - taktTime;
+            const isOverTakt = actual > taktTime * 1.05;
+            const isUnderTakt = actual < taktTime * 0.85;
+            return {
+                id: st.id,
+                name: st.name,
+                zone: st.zone,
+                actualCycle: parseFloat(actual.toFixed(1)),
+                taktTime: taktTime,
+                variance: parseFloat(variance.toFixed(1)),
+                status: isOverTakt ? 'OVER_TAKT' : isUnderTakt ? 'UNDER_UTILIZED' : 'BALANCED',
+                utilizationPct: parseFloat(Math.min(100, (actual / taktTime) * 100).toFixed(1))
+            };
+        });
+
+        const totalCycle = this.stations.reduce((sum, s) => sum + s.actualCycle, 0);
+        const maxCycle = Math.max(...this.stations.map(s => s.actualCycle));
+        const lineEfficiencyPct = parseFloat(((totalCycle / (this.stations.length * maxCycle)) * 100).toFixed(1));
+        const balancedCount = stationMetrics.filter(m => m.status === 'BALANCED').length;
+        const balanceRatio = parseFloat(((balancedCount / this.stations.length) * 100).toFixed(1));
+
+        return {
+            taktTime,
+            lineEfficiencyPct,
+            balanceRatio,
+            balancedCount,
+            totalStations: this.stations.length,
+            stationMetrics
+        };
     }
 
     getNeighborAverage(index, param) {

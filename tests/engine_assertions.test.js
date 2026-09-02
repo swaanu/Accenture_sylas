@@ -86,5 +86,26 @@ if (window.lineInstances && window.lineInstances['line-legacy'] && window.lineIn
     assert(healthGamma.score > healthBeta.score, `Modern line health index (${healthGamma.score}) strictly exceeds legacy line health index (${healthBeta.score})`);
 }
 
+// Stress Test 5: Thermal-Mechanical Frame Expansion Coupling
+const stS4 = window.simEngine.getStation('S4');
+window.simEngine.computeThermalMechanicalCoupling(stS4, 1.0);
+const s4Coupling = stS4.thermalCoupling;
+assert(s4Coupling && s4Coupling.thermalExpansionMm >= 0.05 && s4Coupling.thermalExpansionMm <= 0.85, `S4 frame elongation (${s4Coupling?.thermalExpansionMm}mm) bounded within 0.05-0.85mm spec`);
+
+// Stress Test 6: 2-Parameter Weibull Tool RUL Prognostics
+const stS8 = window.simEngine.getStation('S8');
+window.simEngine.computeStationWeibullRul(stS8, 1.0);
+const s8Weibull = stS8.weibull;
+assert(s8Weibull && s8Weibull.beta > 1.0 && s8Weibull.reliability > 0 && s8Weibull.rulHours > 0, `Weibull RUL model evaluates S8 (beta: ${s8Weibull?.beta?.toFixed(2)}, RUL: ${s8Weibull?.rulHours}h)`);
+
+// Stress Test 7: Mixed-Model Variant Cycle Dwell Signatures
+const evModel = window.simEngine.vehicleModels.find(m => m.code === 'EV-SEDAN');
+const iceModel = window.simEngine.vehicleModels.find(m => m.code === 'ICE-LUXURY');
+assert(evModel && iceModel && evModel.specialDwells.S24 === 72 && iceModel.specialDwells.S24 === 0, `Mixed-model EV S24 dwell (${evModel?.specialDwells?.S24}s) strictly exceeds ICE bypass (${iceModel?.specialDwells?.S24}s)`);
+
+// Stress Test 8: Takt Harmony Line Balancer
+const taktSummary = window.simEngine.getTaktTimeHarmonySummary();
+assert(taktSummary && taktSummary.lineEfficiencyPct >= 70.0 && taktSummary.totalStations === 35, `Takt harmony line efficiency (${taktSummary?.lineEfficiencyPct}%) meets >=70% benchmark`);
+
 const statusLabel = (passCount === totalCount) ? '(100% SUCCESS)' : `(${Math.round(100 * passCount / Math.max(1, totalCount))}% — FAILURES PRESENT)`;
 console.log('\nRESULTS: ' + passCount + ' / ' + totalCount + ' ASSERTIONS PASSED ' + statusLabel + '\n');
