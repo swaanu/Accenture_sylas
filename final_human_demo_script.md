@@ -1,11 +1,11 @@
-# DigitalTwin.ai / Sylas — Final Human Demo Script (Complete Edition)
+# DigitalTwin.ai / Sylas — Final Human Demo Script (Master Superset)
 
 ---
 
 ### 0:00–0:30 — Cold Open
 
 **WHAT TO SHOW:**  
-Boot/dashboard: 35 stations, stoppage-cost figure, full-sensorization capex and holdout-accuracy figure. Then open Modelling & Physics.
+Boot/dashboard: 35 stations, stoppage-cost figure, full-sensorization capex and holdout-accuracy figure. Let the cyber-physical boot sequence finish, click "ENTER MISSION CONTROL".
 
 **SAY:**  
 Okay, so let me quickly show you what we're actually trying to solve here.
@@ -16,11 +16,33 @@ At the same time, if a bottleneck starts moving around the line, or a defect sta
 
 So the basic idea of our system is: measure what we can, infer what we can't directly measure, and then use all of that information to help the person running the plant make a decision.
 
-So, let's start with the modelling side, because that's where most of the trust in the system comes from.
+So first, let's look at the primary cockpit that the operator actually uses day to day—the Floor Supervisor view.
 
 ---
 
-### 0:30–2:00 — Modelling & Physics
+### 0:30–1:15 — Floor Supervisor View
+
+**WHAT TO SHOW:**  
+Floor Supervisor View: full 35-station physical conveyor strip across Body Shop (S1–S10), Paint Shop (S11–S20), and Final Assembly (S21–S35). Show moving vehicle sprites, circular buffer level indicators, and station cycle times. Toggle `[3D Isometric]` mode above conveyor (showing animated robotic welding arms and spatial grid) and briefly show `[Energy & Thermal]` mode. Point to the top live financial loss counter accumulating at $4/sec. Show the bottom-right interactive HiDPI mini-map with screen-space hit testing and HUD tooltip.
+
+**SAY:**  
+So here is the Floor Supervisor view.
+
+Right across the screen, you're looking at the full 35-station assembly line, covering Body in White, Paint, and Final Assembly.
+
+Each station card gives the operator an immediate read on cycle time, input and output buffer levels, and operational state.
+
+Up here, we can also change how we look at the line. Clicking '3D Isometric' switches the canvas into a 3D spatial grid with animated robotic welding arms and vehicle transport, and we also have an 'Energy & Thermal' mode that visualizes real-time power draw and thermal dissipation.
+
+Down here at the bottom right, we have an interactive mini-map with screen-space hit testing, so you can jump to any station across the entire factory in one click.
+
+And up at the top, this financial ticker is calculating downtime loss in real time—costing about 4 dollars a second whenever a bottleneck forms.
+
+Now, let's step into the Modelling & Physics view, because that's where most of the trust in the system actually comes from.
+
+---
+
+### 1:15–2:45 — Modelling & Physics
 
 **WHAT TO SHOW:**  
 Modelling & Physics: topology/35-station split → measured parameters → inferred parameters → four-method fallback ladder. Show S2 (9.8kA, 220ms, 5.08mm), S3 (202.9°C nominal / 233.3°C degraded), S4 cascading thermal expansion badge (`ΔL = 0.751mm → +26.3% TORQUE FRICTION`), S8 and S13. Briefly show cost/accuracy table, especially $385 full retrofit, 0.2 min lead time, 1.6% FAR, 99% trust.
@@ -56,7 +78,7 @@ So the main idea here is pretty simple: we don't sensorize something just becaus
 
 ---
 
-### 2:00–3:30 — Predictive Technology
+### 2:45–4:15 — Predictive Technology
 
 **WHAT TO SHOW:**  
 Predictive Techniques: SPC X-bar/R (show 5 tabs in inspector: Oscilloscope, SPC, FFT Spectrum, 6-Axis Radar, Weibull RUL) → CUSUM → EWMA → PINN robotic dynamics → station defect prediction/S18 → feature importance → 80/20 holdout → Precision 84.2%, Recall 88.9%, FAR 2.6% → confusion matrix. Optionally show model comparison.
@@ -96,7 +118,7 @@ So, basically, no single technique gets to make the decision by itself. They're 
 
 ---
 
-### 3:30–4:30 — Data Gaps & Causal Inference
+### 4:15–5:15 — Data Gaps & Causal Inference
 
 **WHAT TO SHOW:**  
 Causal Dependency Topology: highlight a sensor-poor/inferred station, upstream blocked → inferred station → downstream starved. Toggle Force-Directed/Arc Diagram. Show causal links, throughput waveform and entropy gauge.
@@ -124,7 +146,7 @@ So this is how we're trying to deal with sensor gaps without simply pretending t
 
 ---
 
-### 4:30–5:30 — Plant Manager View
+### 5:15–6:15 — Plant Manager View
 
 **WHAT TO SHOW:**  
 Plant Manager: Weekly Sensor Coverage & Gap Audit → telemetry heatmap → bottleneck timeline S4 → S11 → S16 → S21 → S26 → S30 → RUL table (S28 2,196h) → live alert strip S13 / 93% trust / action recommended. Show Prescriptive What-If (500-run Monte Carlo distribution) and OT Maintenance Safety Gate.
@@ -156,7 +178,7 @@ And if someone attempts to deploy a sensor retrofit on a running line, our OT Sa
 
 ---
 
-### 5:30–6:15 — Quality / Backward Trace
+### 6:15–7:00 — Quality / Backward Trace
 
 **WHAT TO SHOW:**  
 VIN/Quality panel: select a vehicle, show station history/telemetry/tool wear, run Backward Trace, then show Ranked Recall Set and value-at-risk.
@@ -182,7 +204,7 @@ That's useful both for quality teams and for the financial side, because it give
 
 ---
 
-### 6:15–7:00 — Leadership / ROI
+### 7:00–7:45 — Leadership / ROI
 
 **WHAT TO SHOW:**  
 Leadership: pause on $482,628 avoided, $385 capex, 0.0-day payback, 74.3 THI. Show Alpha/Fremont, Beta/Detroit, Gamma/Austin. Then Phase 1 → Phase 2 → Phase 3 ending ~$1.01M/year.
@@ -212,7 +234,7 @@ So this is basically showing that the same approach isn't limited to one demo li
 
 ---
 
-### 7:00–7:30 — Validation / Close
+### 7:45–8:15 — Validation / Close
 
 **WHAT TO SHOW:**  
 Validation: show 80/20 holdout and 97.4% ± 1.3% accuracy, 1.3% ± 0.9% FAR. If available, run `python test_runner.py` and finish on `20 / 20 ASSERTIONS PASSED`. Return to dashboard for final frame.
