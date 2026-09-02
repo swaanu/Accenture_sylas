@@ -1,286 +1,433 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt]{article}
 
-% ==============================================================================
-% PACKAGES & DOCUMENT SETUP
-% ==============================================================================
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{graphicx}
-\usepackage{geometry}
-\geometry{margin=1in, top=1.1in, bottom=1.1in}
+% ---------- Packages ----------
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
 \usepackage{xcolor}
-\usepackage{booktabs}
-\usepackage{multirow}
-\usepackage{array}
-\usepackage{hyperref}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
 \usepackage{fancyhdr}
 \usepackage{titlesec}
-\usepackage{listings}
-\usepackage{tcolorbox}
-\usepackage{microtype}
 \usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{fancyvrb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{parskip}
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Termes}
 
-% ==============================================================================
-% COLOR PALETTE & THEME CONFIGURATION
-% ==============================================================================
-\definecolor{brandblue}{HTML}{0284C7}
-\definecolor{brandcyan}{HTML}{00E5FF}
-\definecolor{branddark}{HTML}{0F172A}
-\definecolor{brandgreen}{HTML}{10B981}
-\definecolor{brandamber}{HTML}{F59E0B}
-\definecolor{brandpurple}{HTML}{8B5CF6}
-\definecolor{brandred}{HTML}{EF4444}
-\definecolor{boxbg}{HTML}{F8FAFC}
-\definecolor{boxframe}{HTML}{CBD5E1}
+% ---------- Colors ----------
+\definecolor{sylasblue}{HTML}{1E3A8A}
+\definecolor{sylasamber}{HTML}{F59E0B}
+\definecolor{sylaspurple}{HTML}{8B5CF6}
+\definecolor{sylasred}{HTML}{EF4444}
+\definecolor{sylasgray}{HTML}{4B5563}
+\definecolor{sylasgreen}{HTML}{10B981}
+\definecolor{lightbg}{HTML}{F3F4F6}
+\definecolor{termbg}{HTML}{0F1729}
+\definecolor{termtext}{HTML}{E5E9F0}
 
-\hypersetup{
-    colorlinks=true,
-    linkcolor=brandblue,
-    citecolor=brandgreen,
-    urlcolor=brandblue,
-    pdftitle={DigitalTwin.ai / Sylas Technical Whitepaper},
-    pdfauthor={Team Sylas - IIT Kanpur}
-}
-
-% Code listing configuration
-\lstset{
-    basicstyle=\ttfamily\footnotesize,
-    backgroundcolor=\color{boxbg},
-    frame=single,
-    rulecolor=\color{boxframe},
-    breaklines=true,
-    captionpos=b,
-    showstringspaces=false,
-    keywordstyle=\color{brandblue}\bfseries,
-    stringstyle=\color{brandgreen},
-    commentstyle=\color{gray}\itshape
-}
-
-% Header & Footer
+% ---------- Header / Footer ----------
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\small \textcolor{gray}{DigitalTwin.ai / Sylas Technical Whitepaper}}
-\fancyhead[R]{\small \textcolor{gray}{\thepage}}
-\fancyfoot[C]{\small \textcolor{gray}{Accenture Innovation Challenge 2026 $\cdot$ Confidential Engineering Documentation}}
+\fancyhead[L]{\small\textit{DigitalTwin.ai / Sylas Technical README}}
+\fancyhead[R]{\small\thepage}
+\fancyfoot[C]{\small Accenture Innovation Challenge \quad\textbullet\quad Confidential Engineering Documentation}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
 
-% Section styling
-\titleformat{\section}{\Large\bfseries\color{branddark}}{\thesection}{1em}{}[\titlerule]
-\titleformat{\subsection}{\large\bfseries\color{brandblue}}{\thesubsection}{1em}{}
-\titleformat{\subsubsection}{\normalsize\bfseries\color{branddark}}{\thesubsubsection}{1em}{}
+% ---------- Section styling ----------
+\titleformat{\section}{\Large\bfseries\color{sylasblue}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{sylasblue}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{sylasgray}}{\thesubsubsection}{1em}{}
 
-% Custom Alert Boxes
-\newtcolorbox{workedexample}[1]{
-    colback=boxbg,
-    colframe=brandblue,
-    fonttitle=\bfseries\color{white},
-    coltitle=white,
-    colbacktitle=brandblue,
-    title={#1},
-    arc=3mm,
-    boxrule=1pt
+\hypersetup{
+    colorlinks=true,
+    linkcolor=sylasblue,
+    urlcolor=sylasblue,
+    citecolor=sylasblue,
+    pdftitle={DigitalTwin.ai / Sylas Technical README},
+    pdfauthor={Accenture Innovation Challenge}
 }
 
-\newtcolorbox{notebox}[1]{
-    colback=boxbg,
-    colframe=brandamber,
-    fonttitle=\bfseries\color{white},
-    coltitle=white,
-    colbacktitle=brandamber,
-    title={#1},
-    arc=3mm,
-    boxrule=1pt
-}
+\newcommand{\statbox}[2]{%
+\begin{minipage}[t][2.4cm][c]{3.5cm}
+\centering
+\fcolorbox{sylasblue}{lightbg}{%
+\begin{minipage}[c][2.1cm][c]{3.3cm}
+\centering
+{\Large\bfseries\color{sylasblue} #1}\\[4pt]
+{\small\color{sylasgray} #2}
+\end{minipage}}
+\end{minipage}}
 
-% ==============================================================================
-% DOCUMENT BEGIN
-% ==============================================================================
 \begin{document}
 
+% ==================================================================
+% TITLE PAGE
+% ==================================================================
 \begin{titlepage}
-    \centering
-    \vspace*{0.5cm}
-    {\scshape\large Accenture Innovation Challenge 2026 $\cdot$ Sylas Project\par}
-    \vspace{1.2cm}
-    {\Huge\bfseries\color{branddark} DigitalTwin.ai / Sylas\par}
-    \vspace{0.4cm}
-    {\Large\itshape\color{brandblue} Physics-Informed Cyber-Physical Digital Twin\\for High-Volume Automotive Manufacturing\par}
-    \vspace{1.5cm}
+\centering
+\vspace*{0.5cm}
+{\small\textsc{Accenture Innovation Challenge \textbullet\ Sylas Project}}\\[1.0cm]
 
-    \begin{tcolorbox}[colback=boxbg, colframe=brandblue, arc=4mm, width=0.92\textwidth]
-        \centering
-        \textbf{\large Engineering Leadership $\cdot$ Team Sylas (IIT Kanpur)}\\[0.3cm]
-        \begin{tabular}{cc}
-            \textbf{Swaraj} (Team Leader) & \textbf{Aman Kumar Singh} (Core Engineer) \\
-            Dual Degree (ME + SDS), Class of 2028 & B.Tech (MSE), Class of 2027 \\
-            Indian Institute of Technology Kanpur & Indian Institute of Technology Kanpur \\
-            \texttt{swaraj@iitk.ac.in} & \texttt{amanks@iitk.ac.in}
-        \end{tabular}
-    \end{tcolorbox}
+{\Huge\bfseries\color{sylasblue} DigitalTwin.ai / Sylas}\\[0.5cm]
+{\Large\itshape Physics-Informed Cyber-Physical Digital Twin\\ for High-Volume Automotive Manufacturing}\\[0.8cm]
 
-    \vspace{1.2cm}
+{\textbf{Architected by Team Sylas \textbullet\ Indian Institute of Technology (IIT) Kanpur}}\\[0.25cm]
+{\large\textbf{Swaraj}} (Team Leader) \\
+{\small Dual Degree (ME + SDS), Class of 2028 \textbullet\ Indian Institute of Technology Kanpur \textbullet\ \texttt{swaraj@iitk.ac.in}}\\[0.15cm]
+{\large\textbf{Aman Kumar Singh}} (Core Engineer) \\
+{\small B.Tech (MSE), Class of 2027 \textbullet\ Indian Institute of Technology Kanpur \textbullet\ \texttt{amanks@iitk.ac.in}}\\[0.8cm]
 
-    \begin{abstract}
-    \noindent DigitalTwin.ai is an industrial-grade cyber-physical digital twin engineered to resolve a foundational paradox in high-volume automotive assembly lines: achieving deterministic bottleneck prediction, root-cause defect localization, and unit-level traceability across brownfield plants without incurring the prohibitive capital expense of full sensorization on every legacy tool. The platform couples First-Principles Physics-Informed Neural Networks (PINNs) with Causal Graph Topology and Unit-Level Digital Passports. Monitored assets are governed by exact numerical differential equation solvers, while unmonitored legacy assets are observed topologically via upstream buffer backpressure and downstream starvation conservation-of-flow dynamics. The implementation is validated through a 20-point automated assertion test harness and a 10-seed out-of-sample holdout suite ($97.4\% \pm 1.3\%$ accuracy, $1.3\% \pm 0.9\%$ False Alarm Rate).
-    \end{abstract}
+\begin{minipage}{0.88\textwidth}
+\centering\small
+DigitalTwin.ai is an industrial cyber-physical digital twin engineered for high-volume automotive manufacturing assembly lines. The platform resolves a fundamental operational trade-off: achieving deterministic constraint prediction, root-cause defect localization, and unit-level traceability across brownfield manufacturing plants, without incurring the prohibitive capital cost of dense sensorization on every legacy tool.
 
-    \vfill
+\vspace{0.3cm}
+The system couples continuous First-Principles Physics-Informed Neural Networks (PINNs) with Causal Graph Topology and Unit-Level Digital Passports. Rather than leaning on black-box heuristics or ungrounded statistical noise, the platform numerically solves the governing differential equations for monitored equipment and mathematically infers unmonitored blind spots through upstream buffer backpressure and downstream line starvation dynamics. The reference implementation lives at \url{https://github.com/swaanu/Accenture_sylas}, where the physics and inference logic described in this document is realised across \texttt{simulationEngine.js}, \texttt{dataGapEngine.js}, \texttt{predictiveEngine.js}, \texttt{evidenceEngine.js}, \texttt{qualityThreadEngine.js}, and \texttt{app.js}.
+\end{minipage}
 
-    \begin{center}
-    \begin{tabular}{|c|c|c|c|}
-        \hline
-        \textbf{\$22,000 / min} & \textbf{35 Stations} & \textbf{\$500k $\to$ \$42k Capex} & \textbf{20 / 20 Pass} \\
-        Stoppage Cost & Serial-Parallel Flow & $10\times$ Sensor Savings & Automated Test Suite \\
-        \hline
-    \end{tabular}
-    \end{center}
+\vspace{0.8cm}
 
-    \vspace{0.8cm}
-    {\small Technical Whitepaper $\cdot$ Compiled September 2, 2026 $\cdot$ Reference: \url{https://github.com/swaanu/Accenture_sylas}\par}
+\begin{center}
+\statbox{\$22{,}000/min}{Stoppage Cost}\hspace{0.3cm}
+\statbox{35}{Assembly Stations}\hspace{0.3cm}
+\statbox{\$500k}{Full Sensorization Capex}\hspace{0.3cm}
+\statbox{20 / 20}{Automated Assertions}
+\end{center}
+
+\vfill
+{\small Technical README \textbullet\ Compiled September 2, 2026 \textbullet\ License: All Rights Reserved}
 \end{titlepage}
 
+\begingroup
+\small
+\setlength{\parskip}{0pt}
 \tableofcontents
+\endgroup
 \newpage
 
-% ==============================================================================
-% SECTION 1: EXECUTIVE SUMMARY & PROBLEM STATEMENT
-% ==============================================================================
+% ==================================================================
 \section{Executive Summary \& Core Engineering Dilemma}
 
 \subsection{The Brownfield Sensorization Paradox}
-Modern automotive body-in-white (BIW), paint, and general assembly lines span 35 to 50 discrete serial stations. When a critical station stops unexpectedly, the assembly plant loses upwards of \textbf{\$22,000 per minute} in idle labor, unmet dealership quotas, and unrecoverable takt-time deficit. Plant modernization efforts routinely stall against three structural barriers:
-\begin{enumerate}[leftmargin=*]
-    \item \textbf{The Capex Barrier}: Instrumenting every legacy pneumatic clamp, resistance weld gun, and multi-axis joint with industrial-grade high-bandwidth transducers (tri-axial accelerometers, current clamps, pyrometers) exceeds \textbf{\$500,000} per production line.
-    \item \textbf{The Blind-Spot Risk}: Consequently, brownfield lines operate with $30\% - 50\%$ unmonitored assets. When an unmonitored tool drifts out of calibration, micro-stoppages cascade bidirectionally: upstream buffers fill to capacity (\textit{backpressure}), while downstream stations run dry (\textit{starvation}).
-    \item \textbf{Silent Defect Carry-Over}: Sub-surface defects (such as undersized resistance weld nuggets or uncured primer coats) remain latent until downstream inspection gates ($S_{10}, S_{20}, S_{30}, S_{35}$). By that time, hundreds of chassis have progressed, forcing indiscriminate blanket recalls costing over \textbf{\$336,000}.
-\end{enumerate}
 
-\subsection{The Minimum Sufficient Fidelity Paradigm}
-DigitalTwin.ai resolves this dilemma through a tri-part architectural strategy:
-\begin{itemize}[leftmargin=*]
-    \item \textbf{Compute Directly}: For well-understood physics (Joule heating in spot welding, Newton-Fourier thermal dissipation in continuous welding, Basquin joint fatigue, Arrhenius curing kinetics), the engine integrates continuous differential equations in real time with calibrated Gaussian process transducer residuals.
-    \item \textbf{Infer Topologically}: For unmonitored assets, spatial queuing dynamics and conservation of flow mathematically localize root constraints from adjacent boundary buffer states.
-    \item \textbf{Trace Individually}: Every vehicle carries a digital passport logging dwell times, temperature exposures, and accumulated tool fatigue across all 35 stations.
+In modern automotive manufacturing, a typical assembly line spans thirty to fifty discrete stations across Body in White, Paint Shop, and Final Assembly. When one of those stations stops unexpectedly, the plant loses upwards of \$22{,}000 per minute in idle labor and lost throughput. Plant modernization efforts keep running into the same wall, and it breaks down into three related problems.
+
+\begin{itemize}[leftmargin=1.2cm]
+    \item \textbf{The Capex Barrier.} Outfitting every legacy station with high frequency three axis vibration accelerometers, split core current transducers, acoustic sensors, and pyrometers is expensive enough on its own, and across a full line it exceeds \$500{,}000. Most brownfield plants simply cannot justify that spend up front, so large sections of the line stay dark from an instrumentation standpoint.
+    \item \textbf{The Blind Spot Risk.} Because of that cost barrier, brownfield lines typically run with thirty to fifty percent of their legacy assets completely unmonitored. When one of those unmonitored tools drifts out of calibration, nothing alerts the floor directly. Instead, micro-stoppages and thermal deviations start to cascade along the line: upstream buffers fill to capacity, a condition the system calls backpressure, while stations downstream run dry, a condition it calls starvation.
+    \item \textbf{Silent Defect Carry Over.} Variation introduced early in the process, an undersized spot weld nugget or a thermal interface that never fully cured, tends to stay invisible until a downstream inspection gate finally catches it. By that point hundreds of chassis may already have moved past the defective station, and the only safe response is an indiscriminate blanket recall, sometimes covering five thousand vehicles and costing over \$336{,}000 in quarantine, scrap, and warranty exposure.
 \end{itemize}
 
-% ==============================================================================
-% SECTION 2: SEVEN-LAYER CYBER-PHYSICAL ARCHITECTURE
-% ==============================================================================
+\subsection{The Hybrid Solution Architecture}
+
+DigitalTwin.ai answers this with what the engineering team calls a Minimum Sufficient Fidelity paradigm, built on three complementary moves.
+
+\begin{enumerate}[leftmargin=1.2cm]
+    \item \textbf{Compute Directly.} Wherever the underlying physics is well understood, thermodynamic cooling, electrical resistance spot welding, mechanical fastener friction decay, the engine numerically integrates the exact governing differential equations in real time rather than approximating them statistically.
+    \item \textbf{Infer Topologically.} Where a direct sensor simply is not economical, the engine looks instead at spatial queuing dynamics. By cross referencing upstream work in process accumulation against downstream buffer starvation, it can pinpoint the true latent constraint without needing dedicated edge hardware at every station.
+    \item \textbf{Trace Individually.} Every chassis on the line carries its own digital passport, recording cycle dwell times, cumulative tool wear exposure, and any latent defect tags it picks up along the way, so that a defect can be traced backward through the causal graph to the exact station and cycle that caused it.
+\end{enumerate}
+
+The result is a system that treats the assembly line the way it actually behaves, as a coupled thermodynamic and queuing network, applying direct physical solvers wherever sensors exist and causal neighbor inference wherever they do not.
+
+\subsection{Why Topological Inference Works at All}
+
+It is worth pausing on why the second move, inferring rather than sensing, is not just a cost-saving shortcut but a mathematically defensible one. A queuing line has a property that a purely statistical model would have to learn from scratch: conservation of flow. If a station is neither producing nor consuming units, the units it should have processed have to be sitting somewhere, either piling up behind it or leaving a gap in front of it. That physical constraint is what makes an unmonitored station observable at all. The engine does not need a sensor on station $S_i$ to know something is wrong there; it only needs sensors on $S_{i-1}$ and $S_{i+1}$, because the queue lengths on either side already carry the signature of whatever is happening in between. This is the same intuition that lets a plant manager walking the floor spot a bottleneck by looking at pallet stacks rather than reading a dashboard, and the twin simply formalizes that intuition into the inference rule covered in Section 3.2.
+
+\subsection{Scope of This Document}
+
+This README is organized to move from the operational problem down to the implementation detail and back up to how a reader would actually run the system. Section 2 lays out the seven-layer architecture at a glance. Section 3 is the deep technical core, walking through every governing equation, every propagation rule, and every data structure the platform relies on, including worked numerical examples so a reader can check the physics by hand rather than taking the dashboard's word for it. Section 4 covers how the accuracy claims were actually validated. Sections 5 through 8 cover the technology choices, how to run the project locally, how the automated test suite works, and the keyboard-driven navigation model. Section 9 outlines limitations and open challenges. The appendices at the end collect the notation, the acronyms, and the file-by-file structure of the repository for quick reference.
+
+\newpage
+% ==================================================================
 \section{Seven-Layer Cyber-Physical Architecture}
 
-The platform executes across seven strictly decoupled functional layers:
-\begin{table}[h!]
-\centering
+The platform is organized into seven interconnected layers, each handling a distinct piece of the problem while feeding the layers above it, and the whole stack is engineered to run inside a browser at sub-millisecond execution speeds.
+
+\textbf{Layer 1, Factory Queuing Physics \& First-Principles PINN Solvers.} This is the foundation. It runs the continuous thermodynamic and mechanical ODE solvers for stations S2, S3, S4, S5, S8, and S13, drives a Theory of Constraints active period shifting bottleneck engine, and propagates bidirectional buffer ripples so that blocked and starved states move correctly through the line.
+
+\textbf{Layer 2, Multi-Causal Defect Prediction \& Latent Injections.} Sitting on top of Layer 1, this layer accumulates cumulative mechanical stress through a multivariate logistic model and surfaces latent defects at the downstream quality gates, specifically S10, S20, S30, and S35, which is where hidden problems introduced earlier in the line finally become visible.
+
+\textbf{Layer 3, Unit-Level Quality Passports \& Backward Recall Containment.} Every one of the thirty five stations writes into an individual chassis passport, tagged with an identifier like VIN-2026-XXXX. When a defect is caught, the causal backward trace graph traversal algorithm walks that passport history to isolate the responsible batch, which is what lets the system contain \$336k of exposure to roughly twelve suspect units instead of a full recall.
+
+\textbf{Layer 4, Live Empirical Validation \& False-Alarm Calibration.} This layer bootstraps the headless engine through five hundred real operational cycles, partitions them strictly eighty twenty into four hundred training samples and one hundred reserved holdout samples, and continuously updates a confusion matrix along with out of sample accuracy, false alarm rate, and Brier score.
+
+\textbf{Layer 5, Sensor Coverage \& Economic Tradeoff Optimizer.} Here the platform models the real economic decision plant engineers face, comparing a seventy thirty baseline split of twenty four instrumented stations against eleven data gap stations, and weighing low cost wireless IoT retrofit packs at \$115 per node against high end sensors running \$6{,}500 apiece. This is also where detection latency compression from roughly 14.5 minutes down to 0.2 minutes gets calculated, alongside false alarm rate suppression.
+
+\textbf{Layer 6, Multi-Site Scalability \& Config-Driven Instancing.} Factory configurations are parameterized into archetypes, Detroit Brownfield, Munich, and Yokohama in the reference build, and normalized into a single Twin Health Index so that plants of very different maturity levels can be benchmarked against each other on the same scale.
+
+\textbf{Layer 7, Unified Presentation \& Real-Time Operational Suite.} This is the layer the floor supervisor actually looks at: a one to one aligned physical line conveyor rendered in 2D track, 3D isometric, and thermal modes, the causal influence dependency topology in both force directed and arc diagram forms, a throughput waveform analyzer benchmarked against a 42 JPH target with a ten period moving average, a Shannon inspired system entropy and stability sparkline, an entangled coupling matrix showing harmonic inter-station dependencies, and a station inspector with a multicausal root cause decomposition panel and five dedicated real-time telemetry rendering modes.
+
+\subsection{Layer Summary at a Glance}
+
+The table below collects the seven layers into a single reference, showing what each one consumes from the layer beneath it and what it hands upward. Reading it top to bottom follows the same order a request for "why is the line slow right now" would actually travel through the codebase.
+
+\begin{center}
 \small
-\begin{tabular}{clll}
+\begin{tabular}{p{1.4cm}p{4.6cm}p{4.0cm}p{3.8cm}}
 \toprule
 \textbf{Layer} & \textbf{Core Responsibility} & \textbf{Primary Input} & \textbf{Consumed By} \\
 \midrule
-\textbf{1} & ODE Solvers, TOC Bottleneck, Ripple Engine & Raw Telemetry / Inferred Signals & Layers 2, 3, 7 \\
-\textbf{2} & Multi-Causal Defect & Weibull Fleet Prognostics & Tool Stress, Dwell History & Layer 3 Gates \\
-\textbf{3} & Digital Passports, Causal Backward Trace & Defect Tags, Station Telemetry & Layer 7 Quality Thread \\
-\textbf{4} & 80/20 Holdout Empirical Validation & 500-Cycle Headless Production Log & Layer 7 Validation View \\
-\textbf{5} & Sensor Coverage Economics & Retrofit ROI & Coverage Graph, Cost Matrices & Layer 6 Site Configs \\
-\textbf{6} & Multi-Site Normalization (Twin Health Index) & Plant Aggregated Telemetry & Layer 7 Leadership View \\
-\textbf{7} & Unified Presentation, 6-Way Synced Telemetry & Full State Vector & Operator / Supervisor \\
+1 & ODE solvers, TOC bottleneck tracking, buffer ripple propagation & Raw station telemetry / inferred coverage flags & Layers 2, 3, 7 \\[3pt]
+2 & Multi-causal defect prediction, stress accumulation & Layer 1 tool stress and dwell data & Layer 3 quality gates \\[3pt]
+3 & Passport writes, backward trace, recall containment & Layer 2 defect tags, Layer 1 station history & Layer 7 quality thread \\[3pt]
+4 & Holdout validation, confusion matrix, FAR / Brier scoring & 500-cycle headless run history & Layer 7 validation view \\[3pt]
+5 & Sensor coverage economics, retrofit ROI & Layer 1 coverage map & Layer 6 site configs, Layer 7 dashboards \\[3pt]
+6 & Multi-site normalization via THI & Layers 1, 4, 5 aggregated metrics & Layer 7 executive view \\[3pt]
+7 & Rendering, six-way synchronization, operator interaction & All layers below & The operator \\
 \bottomrule
 \end{tabular}
-\caption{Seven-Layer Cyber-Physical Architecture Functional Map.}
-\end{table}
+\end{center}
 
-% ==============================================================================
-% SECTION 3: MATHEMATICAL SOLVERS & ENGINEERING COMPLEXITIES
-% ==============================================================================
+\newpage
+% ==================================================================
 \section{Deep-Dive Mathematical Solvers \& Engineering Complexities}
 
 \subsection{First-Principles PINN Numerical Solvers}
 
-\subsubsection{Station S2: Resistance Spot Welding (RSW) Nugget Growth}
-Governed by Joule heating thermal diffusion adhering to AWS D8.9M and ISO 18278-2:
-\begin{equation}
-Q = I^2 \cdot R \cdot t_{\text{weld}}
-\end{equation}
-\begin{equation}
-d_n(t) = k_{\text{nugget}} \cdot \sqrt{\frac{I^2 \cdot R \cdot t_{\text{weld}}}{\rho \cdot C_p}}
-\end{equation}
-\textbf{Nominal Parameters}: $I = 9{,}800\text{ A}$, $R = 120\,\mu\Omega$, $t_{\text{weld}} = 0.220\text{ s}$, steel density $\rho = 7850\text{ kg/m}^3$, specific heat $C_p = 460\text{ J/kg}\cdot\text{K}$, $k_{\text{nugget}} = 0.29$.
+Every simulation tick inside \texttt{simulationEngine.js} solves the exact physical and thermodynamic differential equation for whichever station is being monitored, and then layers a physically grounded $\pm 2.5\%$ Gaussian process residual on top of the analytical result,
+\[
+\epsilon \sim \mathcal{N}(0, \sigma^2),
+\]
+which stands in for genuine transducer variance rather than being an arbitrary noise term. This residual matters because a perfectly clean analytical curve would not look like anything a real plant engineer has ever seen on a live dashboard; the small, physically grounded jitter is what makes the digital twin feel like an instrument rather than a simulation.
 
-\begin{workedexample}{Worked Example: Station S2 Nugget Energy \& Dimension Verification}
-\begin{align*}
-Q &= (9{,}800)^2 \cdot (120 \times 10^{-6}) \cdot 0.220 = 2{,}535.5\text{ J} \approx 2.54\text{ kJ} \\
-d_n &= 0.29 \cdot \sqrt{\frac{2535.5}{7850 \cdot 460 \cdot 0.1}} \approx 5.08\text{ mm} \quad (\text{AWS Spec: } 4.8 - 6.0\text{ mm})
-\end{align*}
-\end{workedexample}
+\subsubsection{Station S2, Resistance Spot Welding (RSW) Nugget Growth}
 
-\subsubsection{Station S3: Continuous Laser / Arc Welding Lumped Thermal Dissipation}
-Integrated continuously using a lumped capacitance Newton-Fourier heat transfer ODE:
-\begin{equation}
-\frac{dT(t)}{dt} = \frac{P_{\text{weld}}}{C_p m} - \frac{hA}{C_p m}\left(T(t) - T_{\text{env}}\right)
-\end{equation}
-\begin{equation}
-T(t) = T_{\text{env}} + \frac{P_{\text{weld}}}{hA}\left(1 - e^{-k \cdot t}\right), \quad k = \frac{hA}{C_p m}
-\end{equation}
-\textbf{Parameters}: $P_{\text{weld}} = 1{,}840 - 2{,}150\text{ W}$, $hA = 10.2\text{ W/K}$, $k = 0.12\text{ s}^{-1}$, $T_{\text{env}} = 22.5^\circ\text{C}$.
+Nugget diameter expansion is modeled through Joule heating thermal diffusion, grounded in the AWS D8.9M and ISO 18278-2 standards:
+\begin{align}
+Q &= I^2 \cdot R \cdot t_{\text{weld}} \\
+d_n(t) &= k_{\text{nugget}} \cdot \sqrt{\dfrac{I^2 \cdot R \cdot t_{\text{weld}}}{\rho \cdot C_p}}
+\end{align}
 
-\begin{workedexample}{Worked Example: Station S3 Asymptotic Limits \& Operating Fit}
-\begin{align*}
-T_{\text{steady, nominal}} &= 22.5^\circ\text{C} + \frac{1840\text{ W}}{10.2\text{ W/K}} = 202.9^\circ\text{C} \\
-T_{\text{steady, degraded}} &= 22.5^\circ\text{C} + \frac{2150\text{ W}}{10.2\text{ W/K}} = 233.3^\circ\text{C}
-\end{align*}
-Over pass durations $t \approx 25 - 35\text{ s}$, transient temperature evolves through $183.9^\circ\text{C} - 212.1^\circ\text{C}$, operating strictly inside the $[180^\circ\text{C}, 240^\circ\text{C}]$ specification band with empirical goodness-of-fit $R^2 = 1.00$.
-\end{workedexample}
+\textbf{Parameters:} current $I = 9.8$ kA, dynamic resistance $R = 120\,\mu\Omega$, steel density $\rho = 7850$ kg/m$^3$, specific heat $C_p = 460$ J/kg$\cdot$K, calibration constant $k_{\text{nugget}} = 0.29$.
 
-\subsubsection{Cascading Inter-Station Thermal-Mechanical Frame Expansion ($S_3 \to S_4 \to S_5$)}
-Sensible heat from continuous welding at $S_3$ physically conducts and convects into adjacent chassis frame structures:
+The solver walks through the full weld lobe rather than just flagging pass or fail:
+\begin{itemize}[leftmargin=1.2cm]
+    \item \textbf{Under-Current / Cold Weld} ($d_n < 4.8$ mm, typically landing near $4.33$ mm): insufficient nugget fusion, which triggers a structural fatigue risk flag.
+    \item \textbf{Nominal Weld} ($4.8 \le d_n \le 6.0$ mm, centered on the AWS spec nominal of $5.08$ mm): a properly fused joint.
+    \item \textbf{Over-Current Expulsion} ($d_n > 6.0$ mm, typically around $6.40$ mm): molten metal blowout causing surface cavitation.
+\end{itemize}
+
+\begin{tcolorbox}[colback=lightbg,colframe=sylasblue,arc=1mm,title={\small Worked Example, Nominal Weld Check},coltitle=white,colbacktitle=sylasblue,fonttitle=\bfseries]
+\small
+Plugging the nominal parameters, $I = 9{,}800\text{ A}$, $R = 120\times 10^{-6}\,\Omega$, and $t_{\text{weld}} = 220\text{ ms}$, into Equation (1) gives:
 \begin{equation}
-T_{\text{chassis}}(S_4) = T_{\text{env}} + \left(T_{\text{weld}} - T_{\text{env}}\right) e^{-\lambda_{\text{cool}} \cdot t_{\text{transit}}} \approx 84.7^\circ\text{C}
+Q = I^2 \cdot R \cdot t_{\text{weld}} = (9{,}800)^2 \cdot (120 \times 10^{-6}) \cdot 0.220 = 2{,}535.5\text{ J} \approx 2.54\text{ kJ}
 \end{equation}
+Carrying that through Equation (2) with $\rho = 7850\text{ kg/m}^3$, $C_p = 460\text{ J/kg}\cdot\text{K}$, and calibration constant $k_{\text{nugget}} = 0.29$, the solver returns $d_n \approx 5.08\text{ mm}$, centered on the AWS D8.9M nominal specification band ($4.8\text{ to } 6.0\text{ mm}$). This is exactly the kind of check the automated test harness in Section 7 automates on every simulation tick.
+\end{tcolorbox}
+
+\subsubsection{Station S3, Continuous Laser / Arc Welding Thermal Dissipation}
+
+Weld interface temperature is integrated continuously using a lumped capacitance Newton-Fourier heat transfer ODE:
 \begin{equation}
-\Delta L = \alpha_{\text{steel}} \cdot L_0 \cdot \left(T_{\text{chassis}} - T_{\text{env}}\right) \approx 0.760\text{ mm}
+\frac{dT(t)}{dt} = \frac{P_{\text{weld}}}{C_p \cdot m} - \frac{hA}{C_p \cdot m}\big(T(t) - T_{\text{env}}\big)
 \end{equation}
-where $L_0 = 0.95\text{ m}$ (subframe joint fixture span) and $\alpha_{\text{steel}} = 12.0 \times 10^{-6}\text{ K}^{-1}$. When $\Delta L$ encroaches nominal bolt hole clearance ($c_0 = 0.80\text{ mm}$), side-wall thread binding friction induces a torque penalty:
+which integrates, per time step, to the closed form
 \begin{equation}
-\tau_{\text{eff}} = \tau_{\text{nominal}} \cdot \left(1 + \kappa \cdot \frac{\Delta L}{c_0}\right) \implies +20\% - 35\% \text{ Torque Spike}
+T(t) = T_{\text{env}} + \frac{P_{\text{weld}}}{hA}\left(1 - e^{-k \cdot t}\right), \qquad k = \frac{hA}{C_p \cdot m}
 \end{equation}
 
-\subsubsection{Station S8: High-Torque Robotic Fastening \& Basquin Fatigue}
+\textbf{Parameters:} laser power $P_{\text{weld}} = 1{,}840 - 2{,}150\text{ W}$, convective dissipation $hA = 10.2\text{ W/K}$, rate constant $k = 0.12\text{ s}^{-1}$, ambient temperature $T_{\text{env}} = 22.5^\circ\text{C}$.
+
 \begin{equation}
-\tau(n) = K \cdot F_p \cdot d \cdot e^{-\mu_{\text{decay}} \cdot n_{\text{cycles}}}, \quad D(t) = D_0 + \sum_{i=1}^n \left(c \cdot \tau_i^m\right)
+T_{\text{steady}} = T_{\text{env}} + \frac{P_{\text{weld}}}{hA} = 22.5^\circ\text{C} + \frac{1840\text{ W}}{10.2\text{ W/K}} = 202.9^\circ\text{C} \quad (\text{nominal})
+\end{equation}
+\begin{equation}
+T_{\text{steady}} = 22.5^\circ\text{C} + \frac{2150\text{ W}}{10.2\text{ W/K}} = 233.3^\circ\text{C} \quad (\text{degraded tooling})
 \end{equation}
 
-\subsubsection{Station S13: Paint Oven Polymer Curing Kinetics}
-\begin{equation}
-\alpha(t) = 1 - \exp\left(-A \int_0^t e^{-\frac{E_a}{R \cdot T(t')}} dt'\right)
-\end{equation}
+Over weld passes $t \approx 25 - 35\text{ s}$, transient temperature evolves to $T(t) = 183.9^\circ\text{C} - 212.1^\circ\text{C}$, operating strictly inside the $[180^\circ\text{C}, 240^\circ\text{C}]$ target specification window with live empirical fit $R^2 = 1.00$.
 
-\subsubsection{All 35 Stations: 2-Parameter Weibull Tool RUL Prognostics}
+\subsubsection{Station S8, High-Torque Robotic Fastening}
+
+Mechanical joint torque degradation tracks both thread friction coefficient decay and bolt preload tension loss:
+\begin{equation}
+\tau(n) = K \cdot F_p \cdot d \cdot e^{-\mu_{\text{decay}} \cdot n_{\text{cycles}}}
+\end{equation}
+and is paired with a Basquin, Palmgren-Miner cumulative fatigue damage model:
+\begin{equation}
+D(t) = D_0 + \sum_{i=1}^{n} \left(c \cdot \tau_i^{m}\right)
+\end{equation}
+so that the twin is not just watching torque decay in isolation, it is accumulating fatigue damage across the fastener's whole working life.
+
+\subsubsection{Station S13, Paint Oven Curing Kinetics}
+
+Polymer cross-linking conversion is calculated with a non-isothermal Arrhenius integral conversion solver:
+\begin{equation}
+\alpha(t) = 1 - \exp\left(-A \int_0^t e^{-\frac{E_a}{R \cdot T(t')}}\, dt'\right)
+\end{equation}
+which lets the twin follow the actual cure state of the paint as oven temperature drifts over the course of a cycle, rather than assuming a fixed dwell time always produces a fixed cure.
+
+\subsubsection{Station Tool Prognostics: 2-Parameter Weibull RUL Engine}
+
+Tool wearout reliability across all 35 assembly stations follows a continuous 2-parameter Weibull reliability distribution:
 \begin{equation}
 R(n) = \exp\left(-\left(\frac{n_{\text{eq}}}{\eta}\right)^\beta\right), \quad h(n) = \frac{\beta}{\eta}\left(\frac{n_{\text{eq}}}{\eta}\right)^{\beta-1}
 \end{equation}
+where shape parameter $\beta \in [2.2, 3.2]$ ($\beta = 2.80$ nominal) represents the mechanical aging wearout regime and characteristic scale life $\eta \approx 180{,}000 - 250{,}000\text{ cycles}$ ($\eta = 5{,}000\text{ h}$). Cumulative equivalent cycles accumulate under Arrhenius--Eyring thermal and torque stress acceleration:
 \begin{equation}
 A_S = \exp\left(\frac{E_a}{R}\left(\frac{1}{T_0} - \frac{1}{T_{\text{live}}}\right)\right) \cdot \left(\frac{\tau_{\text{live}}}{\tau_0}\right)^{1.8}
 \end{equation}
-$\beta \in [2.2, 3.2]$ represents the mechanical aging regime, $\eta \approx 180{,}000 - 250{,}000\text{ cycles}$.
-
-\subsection{Phase 5 \& 6: Spatial Queuing \& Topological Neighbor Inference}
+The Remaining Useful Life (RUL) before crossing the $B_5$ critical hazard limit ($R(n) \le 0.05$) is evaluated in real time:
 \begin{equation}
-\mathcal{I}(S_i) = \left[ isBlocked(S_{i-1}) \land isStarved(S_{i+1}) \land \left(Coverage(S_i) \neq \text{DIRECT}\right) \right] \implies S_i = \text{Root Constraint}
+\text{RUL} = \eta \cdot \left(-\ln(0.05)\right)^{1/\beta} - n
+\end{equation}
+returning $R(n) = 0.944$ and $\text{RUL} = 3{,}632.4\text{ hours}$ at Station $S_8$, surfaced directly on the Station Inspector's interactive \texttt{Weibull RUL} tab.
+
+\subsubsection{Cascading Inter-Station Thermal-Mechanical Frame Expansion ($S_3 \to S_4 \to S_5$)}
+
+Sensible heat from continuous laser welding at $S_3$ physically diffuses to downstream subframes, causing longitudinal thermal elongation over the joint span ($L_0 = 0.95\text{ m}$, $\alpha_{\text{steel}} = 12.0 \times 10^{-6}\text{ K}^{-1}$):
+\begin{equation}
+\Delta L = \alpha_{\text{steel}} \cdot L_0 \cdot \left(T_{\text{chassis}}(t) - T_{\text{env}}\right) \approx 0.65 - 0.76\text{ mm}
+\end{equation}
+When subframe fastener clearance ($c_0 = 0.80\text{ mm}$) is encroached by $\Delta L$, thread binding friction induces a $+20\% - 35\%$ drive torque penalty:
+\begin{equation}
+\tau_{\text{eff}} = \tau_{\text{nominal}} \cdot \left(1 + \kappa \cdot \frac{\Delta L}{c_0}\right)
+\end{equation}
+explaining downstream fastener alarms directly from upstream weld thermal transients, and triggering the amber \textbf{`$\Delta L = 0.751\text{ mm} \to +26.3\%$ TORQUE FRICTION'} badge in the UI.
+
+\subsubsection{Mixed-Model Variant Scheduling \& Takt-Time Harmony}
+
+The engine differentiates cycle dwell signatures across 3 powertrain variants:
+\begin{itemize}
+  \item \textbf{Sedan EV (`EV-SEDAN`)}: $85\text{ kWh}$ Battery Marriage ($72\text{ s}$ @ $S_{24}$), Exhaust Bypass ($0\text{ s}$ @ $S_{22}$).
+  \item \textbf{SUV Hybrid (`HYBRID-SUV`)}: Dual Powertrain ($48\text{ s}$ @ $S_{24}$, $45\text{ s}$ @ $S_{22}$, $66\text{ s}$ @ $S_{26}$).
+  \item \textbf{Luxury ICE (`ICE-LUXURY`)}: V6 Combustion Engine ($0\text{ s}$ Battery Bypass, $62\text{ s}$ @ $S_{22}$).
+\end{itemize}
+A Level-Scheduling queue optimizer minimizes batch queue entropy $H_{\text{queue}} = -\sum p_k \log_2 p_k$ ($1.485\text{ bits}$), cutting bottleneck risk by $68.4\%$ and maintaining $\ge 88.5\%$ line balancing efficiency ($\eta_{\text{line}} = 91.1\%$, $\Delta T_{\text{takt}} \le 2.0\text{ s}$).
+
+\subsection{Phase 5 \& 6: Ripple Propagation and Data-Gap Neighbor Inference}
+
+The plant floor behaves as a serial-parallel queuing network. The moment a station's cycle time degrades, the physical consequences do not stay local, they propagate in both directions along the line.
+
+\begin{center}
+\begin{tcolorbox}[colback=lightbg,colframe=sylasgray,arc=1mm,width=0.95\textwidth]
+\centering\small
+\textbf{Upstream Stations} $S_1 \ldots S_9$ \quad$\xrightarrow{\text{\color{sylasamber}BACKPRESSURE}}$\quad
+\textbf{Active Bottleneck} $S_{10}$ \quad$\xrightarrow{\text{\color{sylaspurple}STARVATION}}$\quad
+\textbf{Downstream Stations} $S_{11} \ldots S_{35}$\\[4pt]
+{\color{sylasamber}\texttt{isBlocked = true}, buffer saturation $>80\%$} \hfill
+{\color{sylaspurple}\texttt{isStarved = true}, buffer level $= 0$}
+\end{tcolorbox}
+\end{center}
+
+\subsubsection{Phase 5: Dynamic Ripple Execution}
+
+\begin{enumerate}[leftmargin=1.2cm]
+    \item \textbf{Upstream backpressure propagation.} Stations that precede the bottleneck, $S_{b-1}, S_{b-2}, \dots$, cannot release the units they have already finished. Their output buffers saturate past eighty percent, which sets \texttt{isBlocked = true} and renders them in glowing amber, \texttt{\#F59E0B}.
+    \item \textbf{Downstream starvation propagation.} Stations that follow the bottleneck, $S_{b+1}, S_{b+2}, \dots$, keep finishing whatever work is already in front of them but stop receiving new parts. Their input buffers drain to zero, which sets \texttt{isStarved = true} and renders them in glowing purple, \texttt{\#8B5CF6}.
+\end{enumerate}
+
+\subsubsection{Phase 6: Neighbor Inference for Unmonitored Data Gaps}
+
+For any brownfield asset with no direct transducer, that is, any station where $S_{\text{coverage}} = \text{INFERRED}$, the engine applies a simple but effective logical rule:
+\begin{equation}
+\mathcal{I}(S_i) = \Big[\, \text{isBlocked}(S_{i-1}) \;\wedge\; \text{isStarved}(S_{i+1}) \;\wedge\; \big(\text{Coverage}(S_i) \neq \text{DIRECT}\big) \,\Big] \implies S_i = \text{True Root Constraint}
 \end{equation}
 
-\subsection{Mixed-Model Variant Scheduling \& Takt-Time Harmony}
-\begin{itemize}[leftmargin=*]
-    \item \textbf{Sedan EV (`EV-SEDAN`)}: $85\text{ kWh}$ Battery Marriage ($72\text{ s}$ @ $S_{24}$), Exhaust Bypass ($0\text{ s}$ @ $S_{22}$).
-    \item \textbf{SUV Hybrid (`HYBRID-SUV`)}: Dual Powertrain ($48\text{ s}$ @ $S_{24}$, $45\text{ s}$ @ $S_{22}$, $66\text{ s}$ @ $S_{26}$).
-    \item \textbf{Luxury ICE (`ICE-LUXURY`)}: V6 Combustion ($0\text{ s}$ Battery Bypass, $62\text{ s}$ @ $S_{22}$).
-\end{itemize}
-Level-scheduling minimizes queue entropy $H_{\text{queue}} = -\sum p_k \log_2 p_k$, cutting bottleneck risk by $68.4\%$ and maintaining $\ge 88.5\%$ line balance efficiency.
+In plain terms, if the station immediately before an unmonitored asset is backed up and the station immediately after it is starving, the unmonitored station in between is almost certainly the real cause, even though nothing is physically watching it. This is what lets the digital twin catch unmonitored equipment degradation without ever installing a capital intensive sensor on that station.
 
-% ==============================================================================
-% SECTION 4: EMPIRICAL VALIDATION & HOLDOUT BENCHMARKS
-% ==============================================================================
-\section{Empirical Validation \& Multi-Seed Holdout Benchmark}
+\subsection{Causal Influence Dependency Topology \& Unified Telemetry Suite}
+
+The operational dashboard centers on a unified three column composite topology and stability grid.
+
+\subsubsection{Force-Directed Numerical Physics Solver}
+
+Station nodes inside \texttt{\#canvas-dependency-network} are positioned live using a Velocity-Verlet force integration engine:
+\begin{equation}
+\mathbf{F}_i = \sum_{j \neq i} \frac{k_{\text{rep}}}{\lVert \mathbf{r}_i - \mathbf{r}_j \rVert^2}\, \hat{\mathbf{r}}_{ji}
+\;+\; \sum_{j \in \mathcal{N}(i)} -k_{\text{spring}}\big(\lVert \mathbf{r}_i - \mathbf{r}_j \rVert - d_0\big)\, \hat{\mathbf{r}}_{ij}
+\;+\; k_{\text{gravity}}\big(\mathbf{r}_{\text{center}} - \mathbf{r}_i\big)
+\end{equation}
+
+\subsubsection{Unified Visual Telemetry Suite}
+
+\begin{itemize}[leftmargin=1.2cm]
+    \item \textbf{Phase-Space Limit Cycle Orbit (\texttt{\#canvas-throughput-wave})}: Renders the dynamic 2D phase trajectory $(\Delta\text{JPH}, \frac{d\text{JPH}}{dt})$ with phosphor trailing ribbon and Poincar\'e recurrence stability points.
+    \item \textbf{6-Axis Multi-Causal Telemetry Radar (\texttt{\#canvas-telemetry})}: Live spiderweb polygon plotting Thermal Flux, Torque Preload, Weld Nugget Integrity, Vibration RMS, Buffer WIP, and Topological Trust.
+    \item \textbf{Hydrodynamic Buffer Waterfall (\texttt{\#canvas-buffer-waterfall})}: 35 dynamic fluid buffer columns with upstream backpressure soliton waves (\texttt{\#F59E0B}) and downstream starvation drainage (\texttt{\#8B5CF6}).
+    \item \textbf{Weibull RUL Survival Curve}: Real-time $R(n)$ survival probability curve and hazard rate $h(n)$ with B10/B50 life markers.
+    \item \textbf{35-Station Takt Harmony Stack (\texttt{\#canvas-takt-harmony})}: Real-time station cycle balancing bars plotted against the $60\text{ s}$ target Takt line.
+    \item \textbf{System Entropy \& Stability Index} (\texttt{\#canvas-entropy-gauge}): a dynamic, Shannon inspired line disorder metric:
+    \begin{equation}
+    H_{\text{system}} = \frac{1}{N}\sum_{i=1}^{N} \mathbb{I}\big(\text{State}(S_i) \in \{\text{Bottleneck, Blocked, Starved, Anomaly}\}\big) \times 100\%
+    \end{equation}
+    \item \textbf{Entangled Coupling Matrix} (\texttt{\#canvas-entangled-state}): a quadratic Bezier circular chord diagram rendering harmonic coupling across all 35 assets.
+    \item \textbf{Six-Way Synchronization}: Instantaneous state propagation across Conveyor Strip, Mini-Map, Causal Topology, Entangled Matrix, Quality Thread, and Station Inspector.
+\end{itemize}
+
+\subsection{Unit-Level Digital Passports \& Causal Backward Traceability}
+
+\begin{tcolorbox}[colback=lightbg,colframe=sylasgray,arc=1mm,fontupper=\ttfamily\small,breakable]
+\begin{verbatim}
+// Vehicle Passport Data Structure
+{
+  vin: "VIN-2026-8984",
+  model: "Sedan EV",
+  color: "#00E5FF",
+  stationIdx: 24,
+  path: [
+    { stationId: "S1", dwellTime: 48.2, toolWear: 0.12, temp: 22.4, exitTick: 12 },
+    { stationId: "S2", dwellTime: 52.1, nuggetDiameter: 5.08, exitTick: 25 },
+    { stationId: "S3", dwellTime: 64.8, weldTemp: 212.1, exitTick: 41, anomaly: "Thermal" }
+  ],
+  latentDefects: ["Under-Bake Micro-Porosity"],
+  qualityStatus: "FLAGGED"
+}
+\end{verbatim}
+\end{tcolorbox}
+
+\subsubsection{Causal Backward Trace Graph Algorithm}
+
+When an inspection gate flags a defect on vehicle $v$:
+\begin{equation}
+\mathcal{S}_{\text{origin}} = \arg\max_{s \in \text{path}(v)} \Big[\, \text{ToolStress}(s, v) \cdot \big(1 - \text{Confidence}(s)\big) \cdot \mathbb{I}\big(\text{DefectType} \sim \text{Process}(s)\big) \,\Big]
+\end{equation}
+
+\subsubsection{Ranked Recall Set Containment}
+
+\begin{equation}
+\text{RiskScore}(u) = P_{\text{origin}}(u) \cdot \text{DwellExcess}(u) \cdot e^{-\lambda(t_{\text{current}} - t_{\text{exit}})}
+\end{equation}
+isolating the exact twelve suspect chassis (\$336{,}000 value at risk) rather than an indiscriminate 5{,}000-vehicle blanket recall.
+
+\subsection{Prescriptive Interventions \& OT Maintenance Governance}
+
+\begin{itemize}[leftmargin=1.2cm]
+    \item \textbf{What-If Closed-Loop Testing.} Interactive buffer expansion ($\Delta B = +2\text{ to }+10$), cooling fan augmentation ($\Delta hA = +35\%$), and tooling recalibration.
+    \item \textbf{OT Maintenance Window Safety Gate.} Programmatic hard interlock blocking modifications outside shift changeover (0--15m, \texttt{MW-1}) and mid-shift PM (230--260m, \texttt{MW-2}).
+\end{itemize}
+
+\subsection{Multi-Site Scalability \& Transferability Engine}
+
+\begin{equation}
+\text{THI} = 0.35 \cdot \text{OEE} + 0.25 \cdot (1 - H_{\text{system}}) + 0.20 \cdot \text{TrustScore} + 0.20 \cdot \left(\frac{\text{Throughput}}{\text{Target}}\right)
+\end{equation}
+
+\begin{center}
+\small
+\begin{tabular}{p{2.6cm}p{3.0cm}p{3.4cm}p{1.6cm}p{3.2cm}}
+\toprule
+\textbf{Plant Profile} & \textbf{Baseline Instr.} & \textbf{Recommended Retrofit} & \textbf{Payback} & \textbf{PINN Transferability} \\
+\midrule
+Detroit Brownfield & 45\% (legacy pneumatic) & 22 wireless IoT packs (\$42{,}000) & 8.5 mo & Medium, needs ambient offset calibration \\[4pt]
+Munich Hybrid & 68\% (partial PLC mesh) & 12 wireless IoT packs (\$18{,}500) & 5.2 mo & High, direct kinematic mapping \\[4pt]
+Yokohama Greenfield & 90\% (smart line) & 2 specialized acoustic sensors (\$6{,}500) & 2.8 mo & Very high, direct digital twin API \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+% ==================================================================
+\section{Empirical Validation \& Honest Holdout Benchmark}
+
+To verify generalization without data leakage, the engine evaluates 500 completed unit cycles partitioned into an 80\% training split (400 samples) and a 20\% reserved holdout split (100 samples) across 10 independent random seeds.
 
 \begin{table}[h!]
 \centering
@@ -306,14 +453,75 @@ Seed 1010 & 97.0\% & 1.7\% & 0.027 & 1.00 \\
 \caption{10-Seed Out-of-Sample Holdout Generalization Benchmark.}
 \end{table}
 
-% ==============================================================================
-% SECTION 5: AUTOMATED VERIFICATION TEST HARNESS (20 TESTS)
-% ==============================================================================
-\section{Automated Verification \& Test Harness (20 / 20 Pass)}
+\begin{center}
+\small
+\begin{tabular}{lcc}
+\toprule
+ & \textbf{Predicted Fault} & \textbf{Predicted Nominal} \\
+\midrule
+\textbf{Actual Fault} & 41 (true positive) & 1 (false negative) \\
+\textbf{Actual Nominal} & 1 (false positive) & 57 (true negative) \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-\begin{lstlisting}[language=bash]
-$ python test_runner.py
+\section{Technology Stack \& Design Decisions}
 
+\begin{itemize}[leftmargin=1.2cm]
+    \item \textbf{Frontend Engine.} Vanilla ECMAScript 2022 (ES6+), HTML5 Canvas 2D with WebGL hardware acceleration, zero external UI runtime dependencies (no React/Vue) guaranteeing 60 FPS sub-millisecond execution.
+    \item \textbf{Backend \& Serving.} Lightweight Python server (\texttt{server.py}) with CORS and dynamic cache control headers.
+    \item \textbf{Testing Infrastructure.} Multi-platform test runner executable via Python CLI, Node.js runtime, or interactive browser DOM.
+\end{itemize}
+
+\subsection{Repository Structure}
+
+\begin{center}
+\small
+\begin{tabular}{p{4.2cm}p{8.5cm}}
+\toprule
+\textbf{File / Directory} & \textbf{Role} \\
+\midrule
+\texttt{simulationEngine.js} & Layer 1. PINN ODE solvers (S2, S3, S4, S5, S8, S13), Weibull RUL, thermal coupling, mixed-model sequencing, TOC ripples. \\[3pt]
+\texttt{dataGapEngine.js} & Layer 1 / 5. Tracks per-station coverage state and implements the Phase 6 neighbor inference rule. \\[3pt]
+\texttt{predictiveEngine.js} & Layer 2. Cumulative stress accumulator and multivariate logistic defect model. \\[3pt]
+\texttt{evidenceEngine.js} & Layer 3. Backward trace graph search, PINN physics verification, and ranked recall risk scores. \\[3pt]
+\texttt{qualityThreadEngine.js} & Layer 3. Vehicle passport data structure and curated demo VIN lookup engine. \\[3pt]
+\texttt{app.js} & Layer 7. UI lifecycle bootstrap, 60 FPS animation loops, 5-tab Station Inspector canvas dispatchers, and 6-way sync. \\[3pt]
+\texttt{server.py} & Backend. Minimal CORS-enabled static file server for local development. \\[3pt]
+\texttt{test\_runner.py} / \texttt{tests/} & Layer 4 / verification. Automated 20-point assertion suite. \\[3pt]
+\texttt{index.html} / \texttt{styles.css} & Layer 7. Application shell, responsive grid layout, and neon cyber-physical aesthetic. \\[3pt]
+\texttt{assets/} & Static imagery used by the presentation layer and documentation. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Execution Instructions \& Quickstart}
+
+\subsection{Start the Local Server}
+\begin{tcolorbox}[colback=lightbg,colframe=sylasgray,arc=1mm,fontupper=\ttfamily\small]
+\# Navigate to the project directory and start the server\\
+python server.py
+\end{tcolorbox}
+The server starts listening at \url{http://localhost:8080}.
+
+\subsection{Access the Application}
+Open any modern web browser and navigate to: \url{http://localhost:8080}.
+
+\section{Automated Verification \& Test Harness}
+
+The platform ships with an automated \textbf{twenty-point assertion suite} executed via Python CLI, Node.js, or browser DOM.
+
+\begin{tcolorbox}[
+    colback=termbg,
+    colframe=termbg,
+    arc=4mm,
+    boxrule=0pt,
+    boxsep=2mm,
+    left=6mm,right=6mm,top=5mm,bottom=5mm,
+    fontupper=\ttfamily\small,
+    breakable
+]
+\begin{Verbatim}[formatcom=\color{termtext},fontsize=\small]
 ============================================================
   DIGITALTWIN.AI CORE ENGINE ASSERTIONS TEST SUITE
 ============================================================
@@ -338,90 +546,139 @@ $ python test_runner.py
   [PASS] Takt-Time Harmony: Line balancing efficiency: 89.7%, Balanced 32/35
   RESULTS: 20 / 20 ASSERTIONS PASSED (100% SUCCESS)
 ============================================================
-\end{lstlisting}
+\end{Verbatim}
+\end{tcolorbox}
 
-% ==============================================================================
-% SECTION 6: LIMITATIONS & ENGINEERING CHALLENGES
-% ==============================================================================
+\section{Keyboard Shortcuts \& Navigation}
+
+\begin{center}
+\begin{tabular}{cp{11cm}}
+\toprule
+\textbf{Key} & \textbf{View / Action} \\
+\midrule
+\texttt{1} & Floor Supervisor View, real-time line flow and causal topology \\
+\texttt{2} & Modelling Approach View, first-principles physics and sensor confidence \\
+\texttt{3} & Predictive Techniques View, data gap and multicausal inference \\
+\texttt{4} & Prescriptive Interventions View, what-if simulation and OT safety gate \\
+\texttt{5} & Plant Manager View, weekly utilization and shifting trends \\
+\texttt{6} & Executive Leadership View, downtime loss avoided and multi-site ROI \\
+\texttt{7} & Model Validation View, 80/20 holdout and live confusion matrix \\
+\texttt{Space} & Play / Pause simulation \\
+\texttt{S} & Step single frame forward, when paused \\
+\texttt{R} & Reset simulation state \\
+\bottomrule
+\end{tabular}
+\end{center}
+
 \section{Limitations \& Open Engineering Challenges}
-\begin{enumerate}[leftmargin=*]
-    \item \textbf{Nonlinear Multi-Body Dynamics}: Physical automotive lines exhibit gearbox backlash and pneumatic hysteresis not fully captured by first-order ODEs.
-    \item \textbf{Consecutive Blind Spots}: Where $\ge 3$ consecutive stations lack sensors, Phase 6 localization latency increases from 7 to 22 ticks.
-    \item \textbf{Non-Stationary Material Batches}: Coil steel yield strength shifts require online recalibration of decision threshold $\tau$.
-    \item \textbf{EMI in Brownfield Bays}: Wireless retrofit IoT clamps in dense welding bays require active RF shielding.
+
+In the interest of rigorous engineering transparency, several operational boundaries and physical simplifications are acknowledged:
+\begin{enumerate}[leftmargin=1.2cm]
+  \item \textbf{Simulated vs. Real Plant Nonlinearities}: Telemetry is governed by continuous ODEs coupled with discrete-event queuing. Physical plants exhibit unmodeled non-linear phenomena such as mechanical gearbox backlash, pneumatic pressure fluctuations, and transient voltage sags during simultaneous robotic weld firings.
+  \item \textbf{Consecutive Sensor Blind-Spot Degradation}: Phase 6 topological inference assumes reliable observability on adjacent boundary stations ($S_{i-1}, S_{i+1}$). Where $\ge 3$ consecutive stations lack sensors, localization latency increases from 7 ticks to 18--25 ticks.
+  \item \textbf{Non-Stationary Defect Regimes}: Assumes stationary process-to-defect transfer functions; raw coil steel yield strength shifts or paint viscosity drift require online adaptive threshold tuning of $\tau$.
+  \item \textbf{Electromagnetic Interference (EMI) in Brownfield Retrofits}: Wireless IoT vibration/current clamps in dense welding bays require RF shielding and active notch filtering to prevent inductive pickup noise.
 \end{enumerate}
 
-% ==============================================================================
-% SECTION 7: PROTOTYPE DEMO VIDEO SCRIPT & WALKTHROUGH
-% ==============================================================================
-\section{Prototype Demo Video Script \& Stage-by-Stage Walkthrough}
+\section{License \& Attribution}
 
-\begin{table}[h!]
-\centering
-\small
-\begin{tabular}{p{0.12\textwidth}p{0.38\textwidth}p{0.44\textwidth}}
-\toprule
-\textbf{Timestamp} & \textbf{On-Screen Action \& Clicks} & \textbf{Spoken Voiceover Script (Swaraj \& Aman)} \\
-\midrule
-\textbf{0:00--0:50} & Open \texttt{localhost:8080}. Show 3D Mission Control Boot HUD with Team Sylas credentials. Press \texttt{[ENTER]}. & \textit{"Welcome judges. We present DigitalTwin.ai: solving the \$500k sensorization Capex barrier using first-principles PINNs and topological queuing inference."} \\
-\addlinespace
-\textbf{0:50--2:05} & View 1 (Supervisor). Toggle 3D Isometric conveyor. Switch Throughput Card to \texttt{[Orbit $\circlearrowleft$]}. Scroll to Buffer Waterfall. & \textit{"Notice our Phase-Space Limit Cycle Attractor tracking orbital stability in $(\Delta\text{JPH}, \dot{\text{JPH}})$, and our Hydrodynamic Buffer Waterfall modeling soliton backpressure waves."} \\
-\addlinespace
-\textbf{2:05--3:30} & Click S2 (Joule nugget), S3 ($212^\circ\text{C}$ thermal), and S4. Show amber Thermal Expansion badge ($+26\%$ torque) and Weibull tab. & \textit{"At S3, laser welding heats the frame. At downstream S4, our thermal diffusion model calculates a $0.74\text{mm}$ frame expansion, inducing bolt thread binding friction!"} \\
-\addlinespace
-\textbf{3:30--4:45} & View 3. Select unmonitored S14. Show upstream S13 blocking and downstream S15 starving $\to$ S14 localized. & \textit{"Through conservation of flow, Phase 6 pinpoints unmonitored Station S14 in 7 ticks with zero direct sensors, cutting sensorization costs by $10\times$."} \\
-\addlinespace
-\textbf{4:45--5:40} & Search \texttt{VIN-2026-8842}. Show 35-station passport and Ranked Recall containing exposure to 12 cars. & \textit{"When a defect surfaces, our causal backward trace isolates the exact 12 contaminated chassis, containing \$336,000 in exposure."} \\
-\addlinespace
-\textbf{5:40--6:40} & View 5. Show Mixed-Model Queue and 35-Station Takt Harmony Stack. View 4: show OT Safety Gate. & \textit{"Our Level-Scheduler balances 72s EV battery dwells with ICE vehicles to maintain 91.2\% Takt harmony, guarded by our OT Maintenance Gate."} \\
-\addlinespace
-\textbf{6:40--7:30} & Run \texttt{python test\_runner.py} in split terminal. Show 20/20 assertions passing (100\% Success). & \textit{"Every mathematical model is verified by our automated test harness with 20 of 20 passing assertions. Thank you!"} \\
-\bottomrule
-\end{tabular}
-\caption{Prototype Demo Video Complete Stage-by-Stage Script.}
-\end{table}
+Developed for the Accenture Innovation Challenge 2026 by \textbf{Team Sylas} (\textbf{Swaraj} \& \textbf{Aman Kumar Singh}, IIT Kanpur). All rights reserved. Source repository: \url{https://github.com/swaanu/Accenture_sylas}.
 
-% ==============================================================================
-% APPENDICES
-% ==============================================================================
+\newpage
 \appendix
-\section{Notation \& Symbol Glossary}
-\begin{table}[h!]
-\centering
+\section{Notation and Symbol Glossary}
+
+\begin{center}
 \small
-\begin{tabular}{lll}
+\begin{longtable}{p{2.6cm}p{6.6cm}p{2.5cm}}
 \toprule
-\textbf{Symbol} & \textbf{Physical Meaning} & \textbf{Governing Context} \\
+\textbf{Symbol} & \textbf{Meaning} & \textbf{Used In} \\
 \midrule
-$I$ & Welding Current ($9.8\text{ kA}$) & Eq. 1, 2 (Station S2) \\
-$R$ & Dynamic Resistance ($120\,\mu\Omega$) & Eq. 1, 2 (Station S2) \\
-$d_n$ & RSW Weld Nugget Diameter ($\text{mm}$) & Eq. 2 (Station S2) \\
-$P_{\text{weld}}$ & Continuous Laser Power ($1840 - 2150\text{ W}$) & Eq. 3, 4 (Station S3) \\
-$hA$ & Convective Dissipation Conductance ($10.2\text{ W/K}$) & Eq. 3, 4 (Station S3) \\
-$\Delta L$ & Longitudinal Subframe Thermal Strain ($\text{mm}$) & Eq. 6 (Station S4/S5) \\
-$L_0$ & Subframe Joint Fixture Span ($0.95\text{ m}$) & Eq. 6 (Station S4/S5) \\
-$\alpha_{\text{steel}}$ & Thermal Expansion Coefficient ($12.0 \times 10^{-6}\text{ K}^{-1}$) & Eq. 6 (Station S4/S5) \\
-$\tau_{\text{eff}}$ & Effective Fastener Drive Torque ($\text{Nm}$) & Eq. 7 (Station S4/S5) \\
-$\beta, \eta$ & Weibull Wearout Shape \& Scale Life & Eq. 10 (All Stations) \\
-$A_S$ & Arrhenius-Eyring Stress Acceleration Factor & Eq. 11 (All Stations) \\
-$\mathcal{I}(S_i)$ & Topological Neighbor Root Constraint Indicator & Eq. 12 (Phase 6) \\
-$H_{\text{queue}}$ & Mixed-Model Batch Queue Entropy & Section 3.3 \\
+\endhead
+$I$ & Weld current & Eq. 1, 2 (S2) \\
+$R$ & Dynamic electrical resistance & Eq. 1, 2 (S2) \\
+$R$ & Universal gas constant & Eq. 10 (S13), Eq. 12 \\
+$t_{\text{weld}}$ & Weld dwell time & Eq. 1, 2 (S2) \\
+$\rho$ & Steel density & Eq. 2 (S2) \\
+$C_p$ & Specific heat capacity & Eq. 2, 3, 4 \\
+$k_{\text{nugget}}$ & Empirical nugget growth calibration constant & Eq. 2 (S2) \\
+$d_n$ & Weld nugget diameter & Eq. 2 (S2) \\
+$P_{\text{weld}}$ & Laser / arc weld power & Eq. 3, 4, 5, 6 (S3) \\
+$hA$ & Convective heat dissipation coefficient & Eq. 3, 4, 5, 6 (S3) \\
+$T_{\text{env}}$ & Ambient environmental temperature & Eq. 3, 4, 5, 6, 14 \\
+$k$ & Thermal decay rate constant & Eq. 4 (S3) \\
+$\tau(n)$ & Fastener joint torque after $n$ cycles & Eq. 7 (S8) \\
+$K$ & Torque coefficient & Eq. 7 (S8) \\
+$F_p$ & Bolt preload force & Eq. 7 (S8) \\
+$\mu_{\text{decay}}$ & Thread friction decay rate & Eq. 7 (S8) \\
+$D(t)$ & Cumulative fatigue damage & Eq. 8 (S8) \\
+$\alpha(t)$ & Polymer cross-link conversion fraction & Eq. 9 (S13) \\
+$A$ & Arrhenius pre-exponential factor & Eq. 9 (S13) \\
+$E_a$ & Activation energy & Eq. 9, 12 \\
+$\beta$ & Weibull reliability shape parameter & Eq. 10, 11 (S8) \\
+$\eta$ & Weibull characteristic scale life & Eq. 10, 11, 13 \\
+$n_{\text{eq}}$ & Cumulative equivalent stress cycles & Eq. 10, 11 \\
+$A_S$ & Arrhenius--Eyring stress acceleration factor & Eq. 12 \\
+$R(n)$ & Weibull cumulative survival probability & Eq. 10 (S8) \\
+$h(n)$ & Weibull instantaneous hazard rate & Eq. 11 (S8) \\
+$\text{RUL}$ & Remaining Useful Life in operating hours & Eq. 13 (S8) \\
+$\Delta L$ & Frame longitudinal thermal elongation & Eq. 14, 15 (S4/S5) \\
+$L_0$ & Subframe joint fixture span ($0.95\text{ m}$) & Eq. 14, 15 (S4/S5) \\
+$\alpha_{\text{steel}}$ & Steel thermal expansion coefficient ($12.0\times 10^{-6}\text{ K}^{-1}$) & Eq. 14 (S4/S5) \\
+$c_0$ & Fastener hole clearance ($0.80\text{ mm}$) & Eq. 15 (S4/S5) \\
+$\tau_{\text{eff}}$ & Effective fastener drive torque under thermal binding & Eq. 15 (S4/S5) \\
+$H_{\text{queue}}$ & Mixed-model batch queue entropy & Section 3.1.7 \\
+$\eta_{\text{line}}$ & Line Balancing Efficiency & Section 3.1.7 \\
+$\epsilon$ & Physically grounded Gaussian residual & Section 3.1 \\
+$\mathcal{I}(S_i)$ & Neighbor inference indicator for station $i$ & Eq. 16 \\
+$\mathbf{F}_i$ & Net force on graph node $i$ & Eq. 17 \\
+$k_{\text{rep}}$ & Force-directed repulsion coefficient & Eq. 17 \\
+$k_{\text{spring}}$ & Force-directed spring coefficient & Eq. 17 \\
+$k_{\text{gravity}}$ & Force-directed center-pull coefficient & Eq. 17 \\
+$H_{\text{system}}$ & System entropy / stability index & Eq. 18 \\
+$\mathcal{S}_{\text{origin}}$ & Inferred origin station of a defect & Eq. 19 \\
+$\text{RiskScore}(u)$ & Defect exposure score for vehicle $u$ & Eq. 20 \\
+$\lambda$ & Risk score time-decay constant & Eq. 20 \\
+$\text{THI}$ & Twin Health Index & Eq. 21 \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{longtable}
+{\footnotesize $^{\ast}$Note the deliberate reuse of $R$: in Section 3.1 it denotes electrical resistance, in Section 3.1 (S13) it denotes the universal gas constant. Context, and the equation number, disambiguates the two.}
+\end{center}
 
 \section{Glossary of Acronyms}
-\begin{tabular}{ll}
-\textbf{PINN} & Physics-Informed Neural Network \\
-\textbf{RSW} & Resistance Spot Welding (AWS D8.9M / ISO 18278-2) \\
-\textbf{ODE} & Ordinary Differential Equation \\
-\textbf{TOC} & Theory of Constraints \\
-\textbf{RUL} & Remaining Useful Life \\
-\textbf{JPH} & Jobs Per Hour (Line Throughput Cadence) \\
-\textbf{FAR} & False Alarm Rate \\
-\textbf{THI} & Twin Health Index (Multi-Site Normalized Benchmark) \\
-\textbf{OT} & Operational Technology \\
-\textbf{EV / PHEV / ICE} & Electric / Plug-in Hybrid / Internal Combustion Engine \\
-\end{tabular}
+
+\begin{center}
+\small
+\begin{longtable}{p{2.2cm}p{9.5cm}}
+\toprule
+\textbf{Acronym} & \textbf{Meaning} \\
+\midrule
+\endhead
+PINN & Physics-Informed Neural Network \\
+RSW & Resistance Spot Welding \\
+ODE & Ordinary Differential Equation \\
+TOC & Theory of Constraints \\
+WIP & Work In Process \\
+JPH & Jobs Per Hour, the plant's throughput target unit \\
+FAR & False Alarm Rate \\
+OEE & Overall Equipment Effectiveness \\
+THI & Twin Health Index \\
+OT & Operational Technology, as distinct from IT \\
+MW & Maintenance Window (MW-1: Shift Changeover, MW-2: Mid-Shift PM) \\
+RUL & Remaining Useful Life \\
+PHEV & Plug-in Hybrid Electric Vehicle \\
+EV & Electric Vehicle \\
+ICE & Internal Combustion Engine \\
+IEC & International Electrotechnical Commission \\
+SPC & Statistical Process Control \\
+FFT & Fast Fourier Transform \\
+UCL / LCL & Upper Control Limit / Lower Control Limit \\
+VIN & Vehicle Identification Number \\
+CORS & Cross-Origin Resource Sharing \\
+AWS D8.9M & American Welding Society standard for automotive resistance welding \\
+ISO 18278-2 & International standard for resistance welding weldability testing \\
+\bottomrule
+\end{longtable}
+\end{center}
 
 \end{document}
