@@ -967,6 +967,36 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
 
+        <!-- 2-Parameter Weibull Tool RUL & Reliability -->
+        <div style="grid-column: span 2; margin-top: 0.25rem; padding: 0.45rem 0.6rem; background: rgba(0,229,255,0.04); border-radius: 6px; border: 1px solid rgba(0,229,255,0.25); font-size: 0.68rem; font-family: var(--font-mono);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:#00E5FF; font-weight:700;">⏳ Tool Life Prognostics (2-Param Weibull)</span>
+            <span style="font-size:0.6rem; padding:1px 5px; border-radius:3px; background:${(station.weibull?.reliability || 0.95) < 0.85 ? 'rgba(239,68,68,0.2); color:#EF4444;' : 'rgba(16,185,129,0.2); color:#10B981;'} font-weight:700;">
+              R(n) = ${((station.weibull?.reliability || 0.98) * 100).toFixed(1)}% SURVIVAL
+            </span>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-top: 0.35rem; color: #E2E8F0; font-size: 0.65rem;">
+            <div>RUL: <strong style="color:#10B981;">${station.weibull ? station.weibull.rulHours : station.rul.hoursRemaining.toFixed(0)} hrs</strong></div>
+            <div>Wearout Shape: <strong style="color:#FFAB40;">β = ${station.weibull ? station.weibull.beta.toFixed(2) : '2.40'}</strong></div>
+            <div>Hazard: <strong style="color:#60A5FA;">${((station.weibull?.hazardRate || 0.000012) * 1e5).toFixed(2)} ×10⁻⁵/s</strong></div>
+          </div>
+        </div>
+
+        ${(station.thermalCoupling && station.thermalCoupling.thermalExpansionMm > 0) ? `
+          <!-- Cascading Thermal Frame Expansion & Fastener Friction Penalty -->
+          <div style="grid-column: span 2; margin-top: 0.25rem; padding: 0.45rem 0.6rem; background: rgba(255,171,64,0.08); border-radius: 6px; border: 1px solid rgba(255,171,64,0.35); font-size: 0.68rem; font-family: var(--font-mono);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:#FFAB40; font-weight:700;">🔥 Thermal Expansion Coupling (from ${station.thermalCoupling.heatSourceStation})</span>
+              <span style="font-size:0.6rem; padding:1px 5px; border-radius:3px; background:rgba(239,68,68,0.2); color:#EF4444; font-weight:700;">
+                +${(station.thermalCoupling.frictionTorquePenalty * 100).toFixed(1)}% TORQUE FRICTION
+              </span>
+            </div>
+            <div style="margin-top:0.25rem; color:#CBD5E1; font-size:0.62rem;">
+              Chassis Temp: <strong>${station.thermalCoupling.chassisTemp.toFixed(1)}°C</strong> | Longitudinal Strain ΔL: <strong style="color:#00E5FF;">${station.thermalCoupling.thermalExpansionMm} mm</strong> (Hole Clearance: 0.80 mm)
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Degradation & Failure Mode Context -->
         <div style="grid-column: span 2; margin-top: 0.25rem; padding: 0.4rem 0.5rem; background: rgba(239,68,68,0.05); border-radius: 6px; border-left: 2px solid rgba(239,68,68,0.3); font-size: 0.6rem; color: var(--text-muted);">
           <div><strong style="color:#EF4444;">Degradation Path:</strong> ${spec.degradation}</div>
@@ -1031,6 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     drawStationInspectorGraph(station);
+    drawTelemetryOscilloscope();
 
     const actionRec = document.getElementById('station-evidence-rec');
     if (actionRec) actionRec.textContent = evidence.actionRecommendation;
@@ -1048,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pinnBox = document.getElementById('pinn-model-box');
     if (pinnBox && evidence.pinnDetail) {
       pinnBox.style.display = 'block';
-      const isLiveSolve = ['S2', 'S3', 'S8', 'S13'].includes(station.id);
+      const isLiveSolve = ['S2', 'S3', 'S4', 'S5', 'S8', 'S13'].includes(station.id);
       const livePinn = window.evidenceEngine?.computePinnLive(station.id, station);
       const rawR2 = (livePinn && typeof livePinn.runningR2 === 'string') ? parseFloat(livePinn.runningR2) : (station.physicsStats?.runningR2 ?? 0.93);
       const earnedR2Label = rawR2 < 0.5 
