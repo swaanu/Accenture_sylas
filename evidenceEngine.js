@@ -14,6 +14,16 @@ class EvidenceEngine {
         };
 
         this.pinnModels = {
+            'S2': { 
+                name: 'Spot Weld Nugget Formation (AWS D8.9M)', 
+                equation: 'd(t) = \\sqrt{k \\cdot I^2 \\cdot t / (\\rho C_p)}', 
+                accuracy: 0.95, 
+                inputs: ['Weld Current (kA)', 'Duration (s)', 'Sheet Resistance'],
+                description: 'Calculates Joule heating nugget diameter growth against AWS D8.9M weld lobe.',
+                zone: 'Body-in-White',
+                calibrationDate: '2026-08-10',
+                r2Score: 0.98
+            },
             'S3': { 
                 name: 'Weld Thermal Dynamics', 
                 equation: 'T(t) = T_env + (P_weld / (h*A)) * (1 - e^{-k*t})', 
@@ -23,6 +33,26 @@ class EvidenceEngine {
                 zone: 'Body-in-White',
                 calibrationDate: '2026-07-15',
                 r2Score: 0.93
+            },
+            'S4': { 
+                name: 'Thermal-Mechanical Frame Expansion Coupling', 
+                equation: '\\Delta L = \\alpha_{\\text{steel}} \\cdot L_0 \\cdot (T_{\\text{chassis}} - T_{\\text{env}}), \\; \\tau_{\\text{eff}} = \\tau_0(1 + \\kappa \\Delta L / c_0)', 
+                accuracy: 0.96, 
+                inputs: ['S3 Weld Exit Temp', 'Convective Transit Time', 'Subframe Joint Span (0.95m)', 'Hole Clearance (0.80mm)'],
+                description: 'Models chassis longitudinal thermal elongation from S3 laser weld causing downstream fastener hole thread binding friction.',
+                zone: 'Body-in-White',
+                calibrationDate: '2026-08-28',
+                r2Score: 0.98
+            },
+            'S5': { 
+                name: 'Thermal-Mechanical Frame Expansion Coupling', 
+                equation: '\\Delta L = \\alpha_{\\text{steel}} \\cdot L_0 \\cdot (T_{\\text{chassis}} - T_{\\text{env}}), \\; \\tau_{\\text{eff}} = \\tau_0(1 + \\kappa \\Delta L / c_0)', 
+                accuracy: 0.95, 
+                inputs: ['S3 Weld Exit Temp', 'Convective Transit Time', 'Subframe Joint Span (0.95m)', 'Hole Clearance (0.80mm)'],
+                description: 'Models chassis longitudinal thermal elongation from S3 laser weld causing downstream fastener hole thread binding friction.',
+                zone: 'Body-in-White',
+                calibrationDate: '2026-08-28',
+                r2Score: 0.97
             },
             'S8': { 
                 name: 'Robot Joint Fatigue', 

@@ -82,14 +82,30 @@ try:
         s.sendall(header + masked)
 
     def recv_cdp():
-        data = s.recv(65536)
-        if not data or len(data) < 2: return None
-        offset = 2
-        length = data[1] & 0x7F
-        if length == 126: offset += 2
-        elif length == 127: offset += 8
-        payload = data[offset:]
-        return payload.decode('utf-8', errors='ignore')
+        for _ in range(10):
+            data = s.recv(131072)
+            if not data or len(data) < 2: 
+                time.sleep(0.2)
+                continue
+            # WebSocket frame parsing
+            length = data[1] & 0x7F
+            offset = 2
+            if length == 126:
+                length = struct.unpack('!H', data[2:4])[0]
+                offset = 4
+            elif length == 127:
+                length = struct.unpack('!Q', data[2:10])[0]
+                offset = 10
+            payload = data[offset:offset+length]
+            text = payload.decode('utf-8', errors='ignore')
+            try:
+                msg = json.loads(text)
+                if msg.get('id') == 1:
+                    return text
+            except Exception:
+                pass
+            time.sleep(0.2)
+        return "{}"
 
     test_script = """
     (function() {
