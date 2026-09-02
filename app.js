@@ -1145,6 +1145,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 13. Telemetry Oscilloscope
   // ==========================================
   function drawTelemetryOscilloscope() {
+    const station = sim.stations.find(s => s.id === selectedStationId);
+    if (!station) return;
+
     if (currentTelemetryTab === 'weibull') {
       drawWeibullRulCurve();
       return;
@@ -1153,6 +1156,15 @@ document.addEventListener('DOMContentLoaded', () => {
       drawTelemetryRadar();
       return;
     }
+    if (currentTelemetryTab === 'SPC') {
+      drawTelemetrySPC(station);
+      return;
+    }
+    if (currentTelemetryTab === 'FFT') {
+      drawTelemetryFFT(station);
+      return;
+    }
+
     const canvas = document.getElementById('canvas-telemetry');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -1168,9 +1180,6 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let x = 0; x < w; x += 20) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
     for (let y = 0; y < h; y += 20) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
     ctx.stroke();
-
-    const station = sim.stations.find(s => s.id === selectedStationId);
-    if (!station) return;
 
     const hist = sim.telemetryHistory[station.id];
     if (!hist || hist.torqueHistory.length === 0) {
@@ -1248,7 +1257,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // View Modes & Telemetry Tabs State
   let currentConveyorViewMode = '2D'; // '2D', '3D', 'ENERGY'
-  let currentTelemetryTab = 'OSC'; // 'OSC', 'SPC', 'FFT'
+  let currentTelemetryTab = 'OSC'; // 'OSC', 'SPC', 'FFT', 'radar', 'weibull'
   let accumulativeFinancialLoss = 0;
 
   function initViewModeSwitchers() {
@@ -1269,27 +1278,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btnTpOrbit.classList.add('active');
         btnTpWave.classList.remove('active');
         if (tpCardTitle) tpCardTitle.textContent = '🌀 Phase-Space Attractor';
-      });
-    }
-
-    // Weibull RUL Telemetry Tab
-    const tabWeibull = document.getElementById('tab-tel-weibull');
-    if (tabWeibull) {
-      tabWeibull.addEventListener('click', () => {
-        currentTelemetryTab = 'weibull';
-        document.querySelectorAll('.tel-tab-btn').forEach(b => b.classList.remove('active'));
-        tabWeibull.classList.add('active');
-        drawTelemetryOscilloscope();
-      });
-    }
-    // 6-Axis Radar Telemetry Tab
-    const tabRadar = document.getElementById('tab-tel-radar');
-    if (tabRadar) {
-      tabRadar.addEventListener('click', () => {
-        currentTelemetryTab = 'radar';
-        document.querySelectorAll('.tel-tab-btn').forEach(b => b.classList.remove('active'));
-        tabRadar.classList.add('active');
-        drawTelemetryOscilloscope();
       });
     }
 
@@ -1317,20 +1305,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabOsc = document.getElementById('tab-tel-osc');
     const tabSpc = document.getElementById('tab-tel-spc');
     const tabFft = document.getElementById('tab-tel-fft');
+    const tabRadar = document.getElementById('tab-tel-radar');
+    const tabWeibull = document.getElementById('tab-tel-weibull');
 
-    const setTelTab = (tab) => {
+    const setTelTab = (tab, btnEl) => {
       currentTelemetryTab = tab;
-      [tabOsc, tabSpc, tabFft].forEach(t => t?.classList.remove('active'));
-      if (tab === 'OSC') tabOsc?.classList.add('active');
-      else if (tab === 'SPC') tabSpc?.classList.add('active');
-      else if (tab === 'FFT') tabFft?.classList.add('active');
-      const st = sim.stations.find(s => s.id === selectedStationId);
-      if (st) drawStationInspectorGraph(st);
+      [tabOsc, tabSpc, tabFft, tabRadar, tabWeibull].forEach(t => t?.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      drawTelemetryOscilloscope();
     };
 
-    tabOsc?.addEventListener('click', () => setTelTab('OSC'));
-    tabSpc?.addEventListener('click', () => setTelTab('SPC'));
-    tabFft?.addEventListener('click', () => setTelTab('FFT'));
+    tabOsc?.addEventListener('click', () => setTelTab('OSC', tabOsc));
+    tabSpc?.addEventListener('click', () => setTelTab('SPC', tabSpc));
+    tabFft?.addEventListener('click', () => setTelTab('FFT', tabFft));
+    tabRadar?.addEventListener('click', () => setTelTab('radar', tabRadar));
+    tabWeibull?.addEventListener('click', () => setTelTab('weibull', tabWeibull));
   }
 
   // Dispatcher for station inspector graph based on selected tab
